@@ -14,6 +14,10 @@
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     
+    <!-- Leaflet CSS & JS (Untuk Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <!-- SheetJS (Excel) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <!-- jsPDF & AutoTable for PDF Export -->
@@ -139,7 +143,10 @@
         <!-- SIDEBAR -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-brand">
-                <i class="fas fa-chart-line"></i> <span class="nav-text">Sales Pro</span>
+                <!-- FITUR BARU 5: LOGO UT SCHOOL -->
+                <!-- Pastikan file logo-utschool.jpg ada di folder yang sama -->
+                <img src="logo-utschool.jpg" alt="UT School" style="max-height: 40px; border-radius: 4px; object-fit: contain; background: white; padding: 2px;" onerror="this.src='https://via.placeholder.com/40x40?text=UT';">
+                <span class="nav-text ms-2" style="font-size: 1.3rem;">Sales Pro</span>
             </div>
             <div class="d-flex flex-column mt-4 gap-1">
                 <a href="#" class="nav-link-custom active" onclick="switchView('dashboard', this)"><i class="fas fa-home"></i> <span class="nav-text">Dashboard Overview</span></a>
@@ -188,22 +195,32 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <!-- FITUR BARU 3: FILTER STATUS DI DASHBOARD -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <h5 class="mb-0 fw-bold">Key Performance Indicators</h5>
-                        <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="renderDashboard()"><i class="fas fa-sync-alt me-1"></i> Perbarui</button>
+                        <div class="d-flex gap-2 align-items-center">
+                            <label class="form-label mb-0 small fw-bold text-muted d-none d-sm-block">Filter Tampilan:</label>
+                            <select class="form-select form-select-sm fw-bold border-dark shadow-sm" style="width: auto;" id="dashFilterStatus" onchange="renderDashboard()">
+                                <option value="ALL">Semua Status (ALL)</option>
+                                <option value="DEAL">Hanya DEAL</option>
+                                <option value="PENDING">Hanya PENDING</option>
+                                <option value="CANCEL">Hanya CANCEL</option>
+                            </select>
+                            <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="renderDashboard()"><i class="fas fa-sync-alt me-1"></i> Perbarui</button>
+                        </div>
                     </div>
                     
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
                             <div class="card-custom text-center h-100 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning">
-                                <div class="kpi-title">TOTAL REVENUE (DEAL)</div>
+                                <div class="kpi-title" id="kpiTitleRev">TOTAL REVENUE (DEAL)</div>
                                 <div class="kpi-value text-success" id="kpiRevenue">Rp 0</div>
-                                <div class="small text-muted mt-2 fw-bold"><i class="fas fa-money-bill-wave text-primary me-1"></i> Berdasarkan Kolom Amount</div>
+                                <div class="small text-muted mt-2 fw-bold"><i class="fas fa-money-bill-wave text-primary me-1"></i> Berdasarkan Filter</div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="card-custom text-center h-100 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-dark">
-                                <div class="kpi-title">TOTAL PROJEK DEAL</div>
+                                <div class="kpi-title">TOTAL PROJEK (FILTERED)</div>
                                 <div class="kpi-value" id="kpiTotalDeal">0</div>
                                 <div class="small text-muted mt-2 fw-bold"><i class="fas fa-check-circle text-primary me-1"></i> Terdaftar di sistem</div>
                             </div>
@@ -212,15 +229,43 @@
                             <div class="card-custom text-center h-100 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
                                 <div class="kpi-title">PROJEK TERTUNDA (PENDING)</div>
                                 <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
-                                <div class="small text-muted mt-2 fw-bold"><i class="fas fa-clock text-primary me-1"></i> Menunggu Konfirmasi</div>
+                                <div class="small text-muted mt-2 fw-bold"><i class="fas fa-clock text-primary me-1"></i> Keseluruhan Menunggu</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row g-4">
-                        <div class="col-lg-8">
+                    <!-- FITUR BARU 2 & 4: DIAGRAM BATANG STATUS DAN DIAGRAM LINGKARAN JENIS -->
+                    <div class="row g-4 mt-2">
+                        <div class="col-md-4">
+                            <div class="card-custom h-100 d-flex flex-column">
+                                <h6 class="fw-bold mb-4 text-dark text-center">Perbandingan Status</h6>
+                                <div style="position: relative; height: 250px; width: 100%;">
+                                    <canvas id="chartStatus"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-custom h-100 d-flex flex-column">
+                                <h6 class="fw-bold mb-4 text-dark text-center">Komposisi Jenis Projek</h6>
+                                <div style="position: relative; height: 250px; width: 100%;">
+                                    <canvas id="chartJenis"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card-custom h-100 d-flex flex-column">
+                                <h6 class="fw-bold mb-4 text-dark text-center">Distribusi Top Klien (Nilai)</h6>
+                                <div style="position: relative; height: 250px; width: 100%;">
+                                    <canvas id="chartClient"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mt-1">
+                        <div class="col-12">
                             <div class="card-custom h-100">
-                                <h6 class="fw-bold mb-4 text-dark">Matriks Jumlah Projek (DEAL) by Jenis & Bulan</h6>
+                                <h6 class="fw-bold mb-4 text-dark">Matriks Jumlah Projek (Terfilter) by Jenis & Bulan</h6>
                                 <div class="table-responsive">
                                     <table class="table table-hover table-bordered text-center align-middle mb-0" id="tblMatriksDashboard">
                                         <!-- Generated by JS -->
@@ -228,15 +273,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-4">
-                            <div class="card-custom h-100 d-flex flex-column">
-                                <h6 class="fw-bold mb-4 text-dark text-center">Distribusi Top Klien (Berdasarkan Nilai)</h6>
-                                <div style="position: relative; height: 300px; width: 100%;">
-                                    <canvas id="chartClient"></canvas>
-                                </div>
+                    </div>
+
+                    <!-- FITUR BARU 1: MAP PADA DASHBOARD -->
+                    <div class="row g-4 mt-1 mb-4">
+                        <div class="col-12">
+                            <div class="card-custom">
+                                <h6 class="fw-bold mb-4 text-dark"><i class="fas fa-map-marker-alt text-danger me-2"></i>Peta Persebaran Lokasi Projek</h6>
+                                <div id="mapLokasi" style="height: 400px; width: 100%; border-radius: 8px; z-index: 1;"></div>
                             </div>
                         </div>
                     </div>
+
                 </div>
 
                 <!-- VIEW: DATABASE PROJEK -->
@@ -267,13 +315,14 @@
                         <div class="table-responsive">
                             <table class="table table-hover table-custom align-middle" id="tblSales">
                                 <thead>
+                                    <!-- FITUR BARU 6: FILTER/SORTIR PADA HEADER TABEL -->
                                     <tr>
-                                        <th>Tgl / No Projek</th>
-                                        <th>Judul & Jenis Projek</th>
-                                        <th>Klien (Customer)</th>
-                                        <th>Lokasi</th>
-                                        <th>Amount / Nilai</th>
-                                        <th>STATUS</th>
+                                        <th style="cursor: pointer;" onclick="setSortSales('No. Projek')" title="Klik untuk mengurutkan">Tgl / No Projek <i class="fas fa-sort text-muted ms-1"></i></th>
+                                        <th style="cursor: pointer;" onclick="setSortSales('Judul Projek')" title="Klik untuk mengurutkan">Judul & Jenis Projek <i class="fas fa-sort text-muted ms-1"></i></th>
+                                        <th style="cursor: pointer;" onclick="setSortSales('Cust name')" title="Klik untuk mengurutkan">Klien (Customer) <i class="fas fa-sort text-muted ms-1"></i></th>
+                                        <th style="cursor: pointer;" onclick="setSortSales('Lokasi')" title="Klik untuk mengurutkan">Lokasi <i class="fas fa-sort text-muted ms-1"></i></th>
+                                        <th style="cursor: pointer;" onclick="setSortSales('amount')" title="Klik untuk mengurutkan">Amount / Nilai <i class="fas fa-sort text-muted ms-1"></i></th>
+                                        <th style="cursor: pointer;" onclick="setSortSales('STATUS')" title="Klik untuk mengurutkan">STATUS <i class="fas fa-sort text-muted ms-1"></i></th>
                                         <th class="edit-allowed text-center">Aksi</th>
                                     </tr>
                                 </thead>
@@ -448,6 +497,7 @@
                                     <option value="Konsultasi">Konsultasi</option>
                                     <option value="Program Training">Program Training</option>
                                     <option value="Sponsorship Fee">Sponsorship Fee</option>
+                                    <option value="Lainnya">Lainnya</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -568,7 +618,7 @@
         // ==========================================
         // KONFIGURASI DATABASE GOOGLE SHEETS
         // ==========================================
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwArYSVKlqxIhGh_ukos0xLMOd2SAY6UT41b5o0j_P89h9BWkfB9gWL5_0EsBoFsNSiBQ/exec'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxf5CGYZENTDpVXq_twRaLNOa3fCX2nI2mUwgr_KwA9kpQIgA50gdw4PT38IlKz41euFA/exec'; 
 
         const DB_KEY_SALES = 'sales_data';
         const DB_KEY_USR   = 'sales_users';
@@ -583,6 +633,7 @@
         let localDB = {};
         let currentUser = null;
         let chartInstances = {};
+        let mapInstance = null; // Variabel Peta Global
 
         // 1. INISIALISASI DATABASE & CACHING
         async function initDB() {
@@ -618,7 +669,6 @@
                 }
             } catch (error) {
                 console.error("Gagal memuat data dari Spreadsheet:", error);
-                // PERBAIKAN: Jika gagal, tombol diaktifkan kembali
                 if(loginBtn) {
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'COBA LAGI <i class="fas fa-redo ms-2"></i>';
@@ -695,7 +745,6 @@
             const p = document.getElementById('password').value;
             const users = getDB(DB_KEY_USR);
             
-            // PERBAIKAN: Logika agar dapat membaca teks "active" atau "TRUE" pada Sheet
             const user = users.find(x => {
                 let activeStatus = String(x.active).toUpperCase().trim();
                 let isUserActive = (x.active === true || activeStatus === 'TRUE' || activeStatus === 'ACTIVE');
@@ -739,7 +788,11 @@
             });
         }
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+        function toggleSidebar() { 
+            document.getElementById('sidebar').classList.toggle('collapsed'); 
+            // Refresh map size if it exists to avoid visual glitch after sidebar collapse
+            setTimeout(() => { if(mapInstance) mapInstance.invalidateSize(); }, 350);
+        }
 
         function switchView(viewId, navEl) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -754,7 +807,7 @@
             if(viewId === 'logs') renderLogsTable();
         }
 
-        // --- DASHBOARD ANALYTICS ---
+        // --- DASHBOARD ANALYTICS & FILTERING ---
         function parseAmount(val) {
             if(!val) return 0;
             let str = String(val).replace(/[^0-9,-]+/g,"").replace(/\./g, "").replace(/,/g, ""); 
@@ -764,9 +817,15 @@
 
         function renderDashboard() {
             const data = getDB(DB_KEY_SALES);
+            const dashFilter = document.getElementById('dashFilterStatus').value; // FITUR BARU 3
             
-            let totalRev = 0; let countDeal = 0; let countPending = 0;
+            let totalRev = 0; let countFilteredDeal = 0; let countPendingOrOverall = 0;
             let clients = {}; let matrix = {}; let monthsSet = new Set();
+            
+            // Penampung Untuk Grafik Batang Status dan Lingkaran Jenis (FITUR BARU 2 & 4)
+            let statusCounts = { 'DEAL':0, 'PENDING':0, 'CANCEL':0 };
+            let jenisCounts = {};
+            let mapLocations = {}; // Untuk Map
 
             data.forEach(row => {
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
@@ -774,25 +833,53 @@
                 let clientName = row['Cust name'] || row['Customer'] || 'Unknown';
                 let bulan = row['MONTH'] || '-';
                 let jenis = row['Jenis'] || 'Lainnya';
+                let lokasi = (row['Lokasi'] || '').trim();
 
-                if (status === 'DEAL') {
-                    totalRev += amt; countDeal++;
+                // Hitung chart status (Semua data, tidak dipengaruhi filter agar perbandingan terlihat jelas)
+                if(statusCounts[status] !== undefined) statusCounts[status]++;
+                else statusCounts[status] = 1;
+
+                // Cek status PENDING overall
+                if (status === 'PENDING') countPendingOrOverall++;
+
+                // FILTERING LOGIC UNTUK METRIK UTAMA
+                let isPassedFilter = (dashFilter === 'ALL' || status === dashFilter);
+
+                if (isPassedFilter) {
+                    // Jika filter 'ALL', KPI 1 hanya menghitung revenue DEAL saja (Standar Bisnis)
+                    // Jika filter 'PENDING' dll, KPI 1 menghitung revenue status tersebut (Potensi Revenue)
+                    if (dashFilter === 'ALL') {
+                        if (status === 'DEAL') { totalRev += amt; countFilteredDeal++; }
+                    } else {
+                        totalRev += amt;
+                        countFilteredDeal++;
+                    }
                     
+                    // Klien & Jenis & Matriks (Hanya berdasarkan data terfilter)
                     if(!clients[clientName]) clients[clientName] = 0;
                     clients[clientName] += amt;
+
+                    if(!jenisCounts[jenis]) jenisCounts[jenis] = 0;
+                    jenisCounts[jenis]++;
 
                     if(!matrix[jenis]) matrix[jenis] = {};
                     if(!matrix[jenis][bulan]) matrix[jenis][bulan] = 0;
                     matrix[jenis][bulan]++;
                     monthsSet.add(bulan);
-                } else {
-                    countPending++;
+                    
+                    // Lokasi Map
+                    if(lokasi !== '') {
+                        if(!mapLocations[lokasi]) mapLocations[lokasi] = 1;
+                        else mapLocations[lokasi]++;
+                    }
                 }
             });
 
+            // Update Label KPI Dinamis Berdasarkan Filter
+            document.getElementById('kpiTitleRev').innerText = dashFilter === 'ALL' ? 'TOTAL REVENUE (DEAL)' : `TOTAL NILAI (${dashFilter})`;
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
-            document.getElementById('kpiTotalDeal').innerText = countDeal;
-            document.getElementById('kpiTotalPending').innerText = countPending;
+            document.getElementById('kpiTotalDeal').innerText = countFilteredDeal;
+            document.getElementById('kpiTotalPending').innerText = countPendingOrOverall;
             
             let topClient = Object.keys(clients).sort((a,b) => clients[b] - clients[a])[0] || 'Belum Ada';
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'USER';
@@ -816,31 +903,142 @@
             }
             document.getElementById('tblMatriksDashboard').innerHTML = htmlMatriks + `</tbody>`;
 
-            // Doughnut Chart
-            let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
-            let chartData = sortedClients.map(c => clients[c]);
+            // --- RENDER GRAFIK ---
             const utColors = ['#FFC000', '#1A1A1A', '#718096', '#E6AC00', '#2D3748', '#CBD5E1'];
             
+            // 1. Chart Klien (Doughnut)
+            let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
+            let chartDataClient = sortedClients.map(c => clients[c]);
             if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
             chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
                 type: 'doughnut',
-                data: {
-                    labels: sortedClients,
-                    datasets: [{ data: chartData, backgroundColor: utColors, borderWidth: 0, hoverOffset: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } } } }
+                data: { labels: sortedClients, datasets: [{ data: chartDataClient, backgroundColor: utColors, borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
+
+            // 2. Chart Status (Bar)
+            if(chartInstances['chartStatus']) chartInstances['chartStatus'].destroy();
+            chartInstances['chartStatus'] = new Chart(document.getElementById('chartStatus').getContext('2d'), {
+                type: 'bar',
+                data: { 
+                    labels: Object.keys(statusCounts), 
+                    datasets: [{ 
+                        label: 'Jumlah Projek', 
+                        data: Object.values(statusCounts), 
+                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#718096'], 
+                        borderRadius: 4
+                    }] 
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+
+            // 3. Chart Jenis Projek (Pie)
+            let labelsJenis = Object.keys(jenisCounts);
+            let dataJenis = Object.values(jenisCounts);
+            if(chartInstances['chartJenis']) chartInstances['chartJenis'].destroy();
+            chartInstances['chartJenis'] = new Chart(document.getElementById('chartJenis').getContext('2d'), {
+                type: 'pie',
+                data: { labels: labelsJenis, datasets: [{ data: dataJenis, backgroundColor: utColors, borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // --- RENDER PETA LOKASI (LEAFLET.JS) ---
+            initAndPlotMap(mapLocations);
         }
 
-        // --- MANAJEMEN DATABASE PROJEK ---
+        // FUNGSI PENDUKUNG PETA LOKASI
+        // Catatan: Proses ini melakukan geocoding sederhana. Sangat disarankan untuk menambahkan 
+        // koordinat Latitude/Longitude di database Excel untuk akurasi peta yang sempurna.
+        let geoDictionary = {
+            "Jakarta": [-6.2088, 106.8456],
+            "Adaro Tanjung": [-2.1706, 115.3781], // Tabalong, Kalsel
+            "Kalimantan": [-1.2692, 116.8252],
+            "Surabaya": [-7.2504, 112.7688],
+            "Medan": [-7.2504, 112.7688]
+        };
+
+        function initAndPlotMap(locationsObj) {
+            if(!mapInstance) {
+                mapInstance = L.map('mapLokasi').setView([-2.5489, 118.0149], 5); // Default Center Indonesia
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(mapInstance);
+            }
+
+            // Hapus layer/marker lama
+            mapInstance.eachLayer((layer) => {
+                if(layer instanceof L.Marker) { mapInstance.removeLayer(layer); }
+            });
+
+            // Plot titik baru berdasarkan dictionary sederhana
+            let addedCount = 0;
+            for(let locName in locationsObj) {
+                let count = locationsObj[locName];
+                let coords = null;
+                
+                // Pencarian kata kunci kasar (Hardcoded Fallback karena ketiadaan Lat/Lng)
+                let nm = locName.toLowerCase();
+                for(let key in geoDictionary) {
+                    if(nm.includes(key.toLowerCase())) { coords = geoDictionary[key]; break; }
+                }
+                
+                if(coords) {
+                    // Tambahkan offset kecil agar marker tidak menumpuk sempurna jika titiknya sama
+                    let latOff = coords[0] + (Math.random() - 0.5) * 0.05;
+                    let lngOff = coords[1] + (Math.random() - 0.5) * 0.05;
+                    
+                    L.marker([latOff, lngOff])
+                     .addTo(mapInstance)
+                     .bindPopup(`<b>${locName}</b><br>Jumlah Projek: ${count}`);
+                    addedCount++;
+                }
+            }
+            // Invalidatesize berguna saat div awalnya hidden (d-none)
+            setTimeout(() => { mapInstance.invalidateSize(); }, 500);
+        }
+
+
+        // --- MANAJEMEN DATABASE PROJEK (Meniru Layout HRMS & FITUR SORTIR) ---
         function customSwal(title, text, icon) { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: '#1A1A1A' }); }
 
+        // FITUR BARU 6: Variabel Global Sortir
+        let currentSort = { col: 'Tgl Dibuat', asc: false };
+
+        function setSortSales(columnName) {
+            if(currentSort.col === columnName) {
+                currentSort.asc = !currentSort.asc; // Toggle arah
+            } else {
+                currentSort.col = columnName;
+                currentSort.asc = true;
+            }
+            renderSalesTable(); // Render ulang dengan urutan baru
+        }
+
         function renderSalesTable() {
-            const data = getDB(DB_KEY_SALES);
+            // Ambil data dan copy array untuk di-sortir
+            let data = [...getDB(DB_KEY_SALES)]; 
             const searchVal = (document.getElementById('searchSales')?.value || '').toLowerCase();
             const tbody = document.querySelector('#tblSales tbody');
             const canEdit = (currentUser && currentUser.role === 'admin');
             
+            // Logika Sortir (Urut)
+            data.sort((a, b) => {
+                let valA = a[currentSort.col] || '';
+                let valB = b[currentSort.col] || '';
+                
+                // Khusus kolom amount, ubah ke angka dulu
+                if(currentSort.col === 'amount') {
+                    valA = parseAmount(valA); valB = parseAmount(valB);
+                } else if(currentSort.col === 'No. Projek' || currentSort.col === 'Tgl Dibuat') {
+                    // Handle string biasa agar sorting abjadnya pas
+                    valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase();
+                }
+
+                if(valA < valB) return currentSort.asc ? -1 : 1;
+                if(valA > valB) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
+
             let html = '';
             data.forEach(row => {
                 let no = row['No. Projek']; 
