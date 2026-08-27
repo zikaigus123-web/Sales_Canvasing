@@ -88,7 +88,7 @@
 
         ::-webkit-scrollbar { width: 8px; height: 8px; } ::-webkit-scrollbar-track { background: var(--primary-bg); } ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: var(--brand-color); }
 
-        /* Dashboard Banner (Meniru Foto 2) */
+        /* Dashboard Banner */
         .dash-banner { background-color: var(--sidebar-bg); border-left: 6px solid var(--brand-color); border-radius: 1rem; padding: 1.5rem 2rem; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .dash-banner i.bg-icon { position: absolute; right: -20px; bottom: -30px; font-size: 10rem; color: rgba(255,255,255,0.03); transform: rotate(-15deg); }
     </style>
@@ -111,14 +111,16 @@
                     <label class="form-label fw-bold small text-dark">Username</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
-                        <input type="text" class="form-control border-start-0 ps-0 bg-light" id="username" required placeholder="Gunakan: admin">
+                        <!-- Menghilangkan placeholder admin -->
+                        <input type="text" class="form-control border-start-0 ps-0 bg-light" id="username" required placeholder="Masukkan username">
                     </div>
                 </div>
                 <div class="mb-4">
                     <label class="form-label fw-bold small text-dark">Password</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-muted"></i></span>
-                        <input type="password" class="form-control border-start-0 ps-0 bg-light" id="password" required placeholder="Gunakan: admin123">
+                        <!-- Menghilangkan placeholder admin123 -->
+                        <input type="password" class="form-control border-start-0 ps-0 bg-light" id="password" required placeholder="Masukkan password">
                         <button class="btn btn-light border" type="button" onclick="togglePassword()"><i class="fas fa-eye text-muted" id="eyeIcon"></i></button>
                     </div>
                 </div>
@@ -177,11 +179,11 @@
                 <!-- VIEW: DASHBOARD -->
                 <div id="view-dashboard" class="view-section active fade-in">
                     
-                    <!-- Communicative Banner (Meniru Foto 2) -->
+                    <!-- Communicative Banner -->
                     <div class="dash-banner mb-4">
                         <i class="fas fa-chart-pie bg-icon"></i>
                         <div class="position-relative z-1">
-                            <h3 class="fw-bold mb-2" id="dashGreeting">Halo, SUBHAN.</h3>
+                            <h3 class="fw-bold mb-2" id="dashGreeting">Halo, USER.</h3>
                             <p class="mb-0 fs-6 text-light" style="max-width: 800px; line-height: 1.6;" id="dashStory">
                                 Memuat ringkasan data sistem...
                             </p>
@@ -239,13 +241,13 @@
                     </div>
                 </div>
 
-                <!-- VIEW: DATABASE PROJEK (Meniru Foto 3) -->
+                <!-- VIEW: DATABASE PROJEK -->
                 <div id="view-sales" class="view-section fade-in">
                     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                         <h3 class="mb-0 fw-bold">Database Projek</h3>
                         
-                        <!-- TOMBOL-TOMBOL PERSIS SEPERTI FOTO 3 -->
                         <div class="d-flex gap-2 flex-wrap">
+                            <!-- URL Spreadsheet diubah ke URL asli yang diberikan user -->
                             <button class="btn btn-outline-info fw-bold edit-allowed" onclick="window.open('https://docs.google.com/spreadsheets/d/1kL3DUrkRsi1ItPYqfkFbkBQ6j1cRuNGcclUxbhKNF0g/edit?usp=sharing', '_blank')"><i class="fas fa-external-link-alt me-2"></i>Buka Spreadsheet</button>
                             <button class="btn btn-light border fw-bold edit-allowed" onclick="downloadTemplate()"><i class="fas fa-file-excel me-2 text-success"></i>Template</button>
                             
@@ -567,10 +569,10 @@
 
     <script>
         // ==========================================
-        // KONFIGURASI DATABASE GOOGLE SHEETS (Sama seperti HRMS)
+        // KONFIGURASI DATABASE GOOGLE SHEETS
         // ==========================================
-        // GANTI URL DI BAWAH DENGAN URL WEB APP GOOGLE APPS SCRIPT KAMU YANG BARU (SALES)
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycb.../exec'; 
+        // URL WEB APP GOOGLE APPS SCRIPT YANG BARU DAN ASLI (Sesuai dengan yang diberikan)
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxf5CGYZENTDpVXq_twRaLNOa3fCX2nI2mUwgr_KwA9kpQIgA50gdw4PT38IlKz41euFA/exec'; 
 
         const DB_KEY_SALES = 'sales_data';
         const DB_KEY_USR   = 'sales_users';
@@ -611,7 +613,7 @@
                     }
                     localDB[DB_KEY_LOG] = fetchedLogs;
                     
-                    // Buat user default jika benar-benar kosong
+                    // Buat user default jika benar-benar kosong di database
                     if(localDB[DB_KEY_USR].length === 0) {
                         localDB[DB_KEY_USR].push({username: 'admin', password: '123', role: 'admin', active: true});
                     }
@@ -623,8 +625,12 @@
                 }
             } catch (error) {
                 console.error("Gagal memuat data dari Spreadsheet:", error);
-                Swal.fire('Koneksi Gagal', 'Pastikan URL Web App Google Apps Script sudah benar.', 'error');
-                if(loginBtn) loginBtn.innerHTML = 'COBA LAGI';
+                // ERROR HANDLING DIPERBAIKI: Tombol diaktifkan kembali dan diberi tulisan COBA LAGI
+                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau URL Apps Script.', 'error');
+                if(loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = 'COBA LAGI <i class="fas fa-redo ms-2"></i>';
+                }
             }
         }
 
@@ -754,7 +760,7 @@
             if(viewId === 'logs') renderLogsTable();
         }
 
-        // --- DASHBOARD ANALYTICS (Meniru Foto 2, Namun Konsep Sales) ---
+        // --- DASHBOARD ANALYTICS ---
         function parseAmount(val) {
             if(!val) return 0;
             let str = String(val).replace(/[^0-9,-]+/g,"").replace(/\./g, "").replace(/,/g, ""); 
@@ -794,7 +800,6 @@
             document.getElementById('kpiTotalDeal').innerText = countDeal;
             document.getElementById('kpiTotalPending').innerText = countPending;
             
-            // MENGADAPTASI FOTO 2 ("Halo, SUBHAN.")
             let topClient = Object.keys(clients).sort((a,b) => clients[b] - clients[a])[0] || 'Belum Ada';
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'USER';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
@@ -833,7 +838,7 @@
             });
         }
 
-        // --- MANAJEMEN DATABASE PROJEK (Meniru Layout HRMS Foto 3) ---
+        // --- MANAJEMEN DATABASE PROJEK ---
         function customSwal(title, text, icon) { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: '#1A1A1A' }); }
 
         function renderSalesTable() {
@@ -1028,7 +1033,7 @@
             }
         }
 
-        // --- MANAJEMEN EXCEL IMPORT / EXPORT (Mengikuti Poin 4 & Foto 3) ---
+        // --- MANAJEMEN EXCEL IMPORT / EXPORT ---
         function parseExcelDate(serial) { 
             if (typeof serial === 'number') return new Date((Math.floor(serial - 25569) * 86400) * 1000).toISOString().split('T')[0]; 
             if (typeof serial === 'string') { let d = new Date(serial); if(!isNaN(d.getTime())) return d.toISOString().split('T')[0]; } return serial; 
@@ -1036,7 +1041,6 @@
 
         function downloadTemplate() { 
             const wb = XLSX.utils.book_new(); 
-            // Header persis Foto 3
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Tgl Dibuat', 'Jenis', 'No. Projek', 'Judul Projek', 'Lokasi', 'amount', 'MONTH', 'Cust name', 'Status', 'STATUS']]), "Data_Sales"); 
             XLSX.writeFile(wb, "Template_Sales_UT.xlsx"); 
             addLog('Download Template', 'Mengunduh template Excel Sales');
@@ -1099,7 +1103,7 @@
             r.readAsBinaryString(file);
         }
 
-        // --- LAPORAN & EKSPOR PDF/EXCEL (Sesuai Poin 2) ---
+        // --- LAPORAN & EKSPOR PDF/EXCEL ---
         function generateReport() {
             const statFilter = document.getElementById('reportFilterStatus').value; 
             const blnFilter = document.getElementById('reportFilterBulan').value; 
@@ -1134,7 +1138,7 @@
             addLog('Export Laporan', 'Mencetak Laporan Revenue ke PDF');
         }
 
-        // --- FUNGSI TAMPILAN DETAIL LOG (Poin 3) ---
+        // --- FUNGSI TAMPILAN DETAIL LOG ---
         function viewLogDetail(logId) {
             let log = getDB(DB_KEY_LOG).find(l => String(l.id) === String(logId));
             if(!log) return;
@@ -1181,11 +1185,15 @@
             addLog('Update Akun', `Status akun ${users[idx].username} diubah menjadi ${users[idx].active}`);
         }
 
-        // --- PENGATURAN RESET (Poin 11) ---
+        // --- PENGATURAN RESET ---
         function resetDatabase() {
             Swal.fire({ title: 'KEMBALIKAN KE PENGATURAN AWAL?', text: "Semua data akan hilang. Ketik 'RESET' untuk mengonfirmasi.", input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Eksekusi'
             }).then((res) => { if (res.value === 'RESET') { localStorage.clear(); initDB(); customSwal('Selesai', 'Sistem dikembalikan ke setelan awal pabrik.', 'success').then(() => { logout(); }); } else if(res.value) { customSwal('Batal', 'Kata kunci salah.', 'error'); } });
         }
+
+        // JALANKAN SAAT HALAMAN DIMUAT
+        window.onload = () => { initDB(); };
+
     </script>
 </body>
 </html>
