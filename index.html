@@ -22,7 +22,7 @@
 
     <style>
         :root {
-            /* UT Theme Colors */
+            /* Theme Colors */
             --primary-bg: #F1F5F9; 
             --sidebar-bg: #1A1A1A; 
             --sidebar-hover: #2D3748; 
@@ -36,7 +36,7 @@
 
         body { font-family: 'Inter', sans-serif; background-color: var(--primary-bg); color: var(--text-main); overflow-x: hidden; }
 
-        /* Bootstrap Overrides for UT Theme */
+        /* Bootstrap Overrides */
         .btn-primary { background-color: var(--brand-color); border-color: var(--brand-color); color: #1A1A1A; font-weight: 700; }
         .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: var(--brand-hover) !important; border-color: var(--brand-hover) !important; color: #1A1A1A !important; }
         .btn-outline-primary { color: var(--sidebar-bg); border-color: var(--brand-color); font-weight: 600; }
@@ -111,7 +111,6 @@
                     <label class="form-label fw-bold small text-dark">Username</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
-                        <!-- Menghilangkan placeholder admin -->
                         <input type="text" class="form-control border-start-0 ps-0 bg-light" id="username" required placeholder="Masukkan username">
                     </div>
                 </div>
@@ -119,7 +118,6 @@
                     <label class="form-label fw-bold small text-dark">Password</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-muted"></i></span>
-                        <!-- Menghilangkan placeholder admin123 -->
                         <input type="password" class="form-control border-start-0 ps-0 bg-light" id="password" required placeholder="Masukkan password">
                         <button class="btn btn-light border" type="button" onclick="togglePassword()"><i class="fas fa-eye text-muted" id="eyeIcon"></i></button>
                     </div>
@@ -247,7 +245,6 @@
                         <h3 class="mb-0 fw-bold">Database Projek</h3>
                         
                         <div class="d-flex gap-2 flex-wrap">
-                            <!-- URL Spreadsheet diubah ke URL asli yang diberikan user -->
                             <button class="btn btn-outline-info fw-bold edit-allowed" onclick="window.open('https://docs.google.com/spreadsheets/d/1kL3DUrkRsi1ItPYqfkFbkBQ6j1cRuNGcclUxbhKNF0g/edit?usp=sharing', '_blank')"><i class="fas fa-external-link-alt me-2"></i>Buka Spreadsheet</button>
                             <button class="btn btn-light border fw-bold edit-allowed" onclick="downloadTemplate()"><i class="fas fa-file-excel me-2 text-success"></i>Template</button>
                             
@@ -571,14 +568,12 @@
         // ==========================================
         // KONFIGURASI DATABASE GOOGLE SHEETS
         // ==========================================
-        // URL WEB APP GOOGLE APPS SCRIPT YANG BARU DAN ASLI (Sesuai dengan yang diberikan)
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxf5CGYZENTDpVXq_twRaLNOa3fCX2nI2mUwgr_KwA9kpQIgA50gdw4PT38IlKz41euFA/exec'; 
 
         const DB_KEY_SALES = 'sales_data';
         const DB_KEY_USR   = 'sales_users';
         const DB_KEY_LOG   = 'sales_logs';
 
-        // Mapping kunci identitas untuk Spreadsheet (Sangat penting agar Update/Delete berfungsi presisi)
         const DB_MAP = {
             [DB_KEY_USR]:   { sheet: 'Users', key: 'username' },
             [DB_KEY_SALES]: { sheet: 'Data_Sales', key: 'No. Projek' },
@@ -605,7 +600,6 @@
                     localDB[DB_KEY_USR]   = result.data.users || [];
                     localDB[DB_KEY_SALES] = result.data.sales_data || [];
                     
-                    // Fallback Log agar tidak hilang saat reload
                     let fetchedLogs = result.data.logs || [];
                     if (!fetchedLogs || fetchedLogs.length === 0) {
                         let localBackup = localStorage.getItem('sales_backup_logs');
@@ -613,7 +607,6 @@
                     }
                     localDB[DB_KEY_LOG] = fetchedLogs;
                     
-                    // Buat user default jika benar-benar kosong di database
                     if(localDB[DB_KEY_USR].length === 0) {
                         localDB[DB_KEY_USR].push({username: 'admin', password: '123', role: 'admin', active: true});
                     }
@@ -625,27 +618,26 @@
                 }
             } catch (error) {
                 console.error("Gagal memuat data dari Spreadsheet:", error);
-                // ERROR HANDLING DIPERBAIKI: Tombol diaktifkan kembali dan diberi tulisan COBA LAGI
-                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau URL Apps Script.', 'error');
+                // PERBAIKAN: Jika gagal, tombol diaktifkan kembali
                 if(loginBtn) {
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'COBA LAGI <i class="fas fa-redo ms-2"></i>';
                 }
+                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau status Apps Script (Pastikan sudah dideploy ke publik).', 'error');
             }
         }
 
         function getDB(key) { return localDB[key] || []; }
 
-        // ENGINE PENYIMPANAN CERDAS (UPSERT & DELETE) - MENGADOPSI HRMS
+        // ENGINE PENYIMPANAN CERDAS (UPSERT & DELETE)
         function saveDB(key, newData) {
             let oldData = localDB[key] || [];
-            localDB[key] = newData; // Update memori lokal UI langsung
+            localDB[key] = newData; 
             
             if(key === DB_KEY_LOG) {
                 localStorage.setItem('sales_backup_logs', JSON.stringify(newData));
             }
 
-            // Hapus Semua Data
             if (newData.length === 0 && oldData.length > 0) {
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "deleteAll", sheetName: DB_MAP[key].sheet }) });
                 return;
@@ -655,7 +647,6 @@
             let oldKeys = oldData.map(x => String(x[keyField]));
             let newKeys = newData.map(x => String(x[keyField]));
             
-            // Delete Data
             let deletedKeys = oldKeys.filter(k => !newKeys.includes(k));
             if (deletedKeys.length > 0) {
                 deletedKeys.forEach(dk => {
@@ -663,7 +654,6 @@
                 });
             }
             
-            // Upsert Data
             if (newData.length > 0) {
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "upsert", sheetName: DB_MAP[key].sheet, keyField: keyField, data: newData }) });
             }
@@ -701,12 +691,17 @@
 
         function handleLogin(e) {
             e.preventDefault();
-            const u = document.getElementById('username').value;
+            const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
             const users = getDB(DB_KEY_USR);
             
-            // Cari user dengan active === true (atau 'TRUE' dari excel)
-            const user = users.find(x => x.username === u && x.password === p && (x.active === true || String(x.active).toUpperCase() === 'TRUE'));
+            // PERBAIKAN: Logika agar dapat membaca teks "active" atau "TRUE" pada Sheet
+            const user = users.find(x => {
+                let activeStatus = String(x.active).toUpperCase().trim();
+                let isUserActive = (x.active === true || activeStatus === 'TRUE' || activeStatus === 'ACTIVE');
+                return x.username === u && x.password === p && isUserActive;
+            });
+            
             if(user) {
                 currentUser = user;
                 document.getElementById('loginScreen').classList.add('d-none');
@@ -715,7 +710,6 @@
                 document.getElementById('displayUserInitial').innerText = u.charAt(0).toUpperCase();
                 document.getElementById('displayUserRole').innerText = user.role;
                 
-                // Override swal confirm color globally for UT Theme
                 Swal.mixin({ customClass: { confirmButton: 'btn btn-primary px-4', cancelButton: 'btn btn-outline-secondary px-4 me-2' }, buttonsStyling: false });
                 
                 applyRolePermissions();
@@ -891,7 +885,6 @@
             let data = getDB(DB_KEY_SALES); 
             let isEdit = document.getElementById('salesOldNo').value !== '';
             
-            // Validasi no Projek tidak boleh kembar jika data baru
             if(!isEdit && data.find(x => String(x['No. Projek']) === String(noProj))) {
                 return customSwal('Error', 'Nomor Projek sudah terdaftar', 'error');
             }
@@ -903,10 +896,10 @@
                 "Judul Projek": document.getElementById('salesJudul').value,
                 "Jenis": document.getElementById('salesJenis').value,
                 "Cust name": document.getElementById('salesKlien').value,
-                "Customer": document.getElementById('salesKlien').value, // Duplikasi backup
+                "Customer": document.getElementById('salesKlien').value, 
                 "Lokasi": document.getElementById('salesLokasi').value,
                 "amount": document.getElementById('salesAmount').value,
-                "Nilai": document.getElementById('salesAmount').value, // Duplikasi backup
+                "Nilai": document.getElementById('salesAmount').value,
                 "Status": document.getElementById('salesApprov').value,
                 "STATUS": document.getElementById('salesStatusAkhir').value,
                 lastUpdatedBy: currentUser.username,
@@ -938,7 +931,6 @@
             
             let tgl = r['Tgl Dibuat'];
             if (tgl && tgl.includes('/')) {
-                // Formatting manual jika dari excel formatnya DD/MM/YYYY
                 let parts = tgl.split('/');
                 if(parts.length === 3) tgl = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
             }
