@@ -262,12 +262,15 @@
             letter-spacing: 0.5px; 
         }
         
+        /* PERBAIKAN: Font size responsif (clamp) & word-break agar angka tidak keluar kotak */
         .kpi-value { 
-            font-size: 2.2rem; 
+            font-size: clamp(1.2rem, 1.8vw, 2.2rem); 
             font-weight: 800; 
             color: var(--sidebar-bg); 
             margin-top: 0.25rem; 
-            line-height: 1; 
+            line-height: 1.2; 
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         /* Tables */
@@ -361,20 +364,14 @@
             display: none !important; 
         }
         
-        #view-dashboard:fullscreen .main-layout-row {
-            flex: 1;
+        #view-dashboard:fullscreen > .row {
             margin: 0 !important;
-            min-height: 0; /* Penting untuk flexbox mencegah overflow */
+            flex-shrink: 0; 
         }
-
-        #view-dashboard:fullscreen .col-left,
-        #view-dashboard:fullscreen .col-right {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
+        
         #view-dashboard:fullscreen .card-custom {
+            height: 100%;
+            margin-bottom: 0;
             padding: 15px;
             display: flex;
             flex-direction: column;
@@ -384,6 +381,14 @@
         #view-dashboard:fullscreen h6 {
             margin-bottom: 8px !important;
             font-size: 0.95rem;
+        }
+
+        /* PERBAIKAN: kpi-value fullscreen text fit */
+        #view-dashboard:fullscreen .kpi-value {
+            font-size: clamp(1rem, 1.5vw, 1.5rem);
+            margin-top: 2px;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         
         /* Tinggi Grafik diatur secara proporsional dengan flex-grow */
@@ -403,6 +408,19 @@
             flex: 1;
             min-height: 0;
             overflow-y: auto;
+        }
+
+        #view-dashboard:fullscreen .main-layout-row {
+            flex: 1;
+            margin: 0 !important;
+            min-height: 0; 
+        }
+
+        #view-dashboard:fullscreen .col-left,
+        #view-dashboard:fullscreen .col-right {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
     </style>
 </head>
@@ -1190,7 +1208,6 @@
             document.getElementById('tblMatriksDashboard').innerHTML = htmlMatriks + `</tbody>`;
 
             // --- RENDER GRAFIK ---
-            // Warna Chart dengan REVISI 2: Mengganti index ke-4 (Kanitra) dengan warna biru pastel/soft kontras
             const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
             
             // 1. Chart Klien (Doughnut)
