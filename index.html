@@ -200,7 +200,7 @@
                             <select class="form-select form-select-sm fw-bold border-dark shadow-sm" style="width: auto;" id="dashFilterStatus" onchange="renderDashboard()">
                                 <option value="ALL">Semua Status (ALL)</option>
                                 <option value="DEAL">Hanya DEAL</option>
-                                <option value="PENDING">Hanya PENDING</option>
+                                <option value="ON PROGRESS">Hanya ON PROGRESS</option>
                                 <option value="CANCEL">Hanya CANCEL</option>
                             </select>
                             <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="renderDashboard()"><i class="fas fa-sync-alt me-1"></i> Perbarui</button>
@@ -224,8 +224,8 @@
                         </div>
                         <div class="col-md-4">
                             <div class="card-custom text-center h-100 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
-                                <div class="kpi-title">PROJEK TERTUNDA (PENDING)</div>
-                                <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
+                                <div class="kpi-title">PROJEK TERTUNDA (ON PROGRESS)</div>
+                                <div class="kpi-value text-danger" id="kpiTotalON PROGRESS">0</div>
                                 <div class="small text-muted mt-2 fw-bold"><i class="fas fa-clock text-primary me-1"></i> Keseluruhan Menunggu</div>
                             </div>
                         </div>
@@ -335,7 +335,7 @@
                                 <select class="form-select shadow-sm" id="reportFilterStatus">
                                     <option value="ALL">Semua Status (ALL)</option>
                                     <option value="DEAL">Hanya DEAL</option>
-                                    <option value="PENDING">Hanya PENDING</option>
+                                    <option value="ON PROGRESS">Hanya ON PROGRESS</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -517,7 +517,7 @@
                                 <label class="form-label fw-bold text-primary">STATUS AKHIR</label>
                                 <select class="form-select border-primary fw-bold" id="salesStatusAkhir">
                                     <option value="DEAL">DEAL</option>
-                                    <option value="PENDING">PENDING</option>
+                                    <option value="ON PROGRESS">ON PROGRESS</option>
                                     <option value="CANCEL">CANCEL</option>
                                 </select>
                             </div>
@@ -554,7 +554,7 @@
                             <label class="form-label fw-bold">Ubah Menjadi Status</label>
                             <select class="form-select border-dark fw-bold" id="usStatusAkhir">
                                 <option value="DEAL">DEAL</option>
-                                <option value="PENDING">PENDING</option>
+                                <option value="ON PROGRESS">ON PROGRESS</option>
                                 <option value="CANCEL">CANCEL</option>
                             </select>
                         </div>
@@ -875,10 +875,10 @@
             const data = getDB(DB_KEY_SALES);
             const dashFilter = document.getElementById('dashFilterStatus').value; 
             
-            let totalRev = 0; let countFilteredDeal = 0; let countPendingOrOverall = 0;
+            let totalRev = 0; let countFilteredDeal = 0; let countON PROGRESSOrOverall = 0;
             let clients = {}; let matrix = {}; let monthsSet = new Set();
             
-            let statusCounts = { 'DEAL':0, 'PENDING':0, 'CANCEL':0 };
+            let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'CANCEL':0 };
             let jenisCounts = {};
             
             // Variabel penyimpan lokasi untuk Map
@@ -896,7 +896,7 @@
                 if(statusCounts[status] !== undefined) statusCounts[status]++;
                 else statusCounts[status] = 1;
 
-                if (status === 'PENDING') countPendingOrOverall++;
+                if (status === 'ON PROGRESS') countON PROGRESSOrOverall++;
 
                 let isPassedFilter = (dashFilter === 'ALL' || status === dashFilter);
 
@@ -931,12 +931,12 @@
             document.getElementById('kpiTitleRev').innerText = dashFilter === 'ALL' ? 'TOTAL REVENUE (DEAL)' : `TOTAL NILAI (${dashFilter})`;
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
             document.getElementById('kpiTotalDeal').innerText = countFilteredDeal;
-            document.getElementById('kpiTotalPending').innerText = countPendingOrOverall;
+            document.getElementById('kpiTotalON PROGRESS').innerText = countON PROGRESSOrOverall;
             
             let topClient = Object.keys(clients).sort((a,b) => clients[b] - clients[a])[0] || 'Belum Ada';
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'USER';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
-            document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${data.length} data projek terdaftar</strong> dengan total <em>revenue</em> DEAL mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang PENDING) untuk menjaga efisiensi target korporat.`;
+            document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${data.length} data projek terdaftar</strong> dengan total <em>revenue</em> DEAL mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
 
             // Matriks Table
             let arrMonths = Array.from(monthsSet).sort();
@@ -1167,7 +1167,7 @@
             document.getElementById('salesLokasi').value = r['Lokasi'] || ''; 
             document.getElementById('salesAmount').value = parseAmount(r['amount'] || r['Nilai']); 
             document.getElementById('salesApprov').value = r['Status'] || ''; 
-            document.getElementById('salesStatusAkhir').value = String(r['STATUS']).toUpperCase().trim() || 'PENDING';
+            document.getElementById('salesStatusAkhir').value = String(r['STATUS']).toUpperCase().trim() || 'ON PROGRESS';
             
             let lastUpdBy = r.lastUpdatedBy || 'Sistem';
             let lastUpdAt = r.lastUpdatedAt || new Date().toISOString();
@@ -1294,7 +1294,7 @@
                            "amount": row.amount || row.Nilai || 0,
                            "Nilai": row.amount || row.Nilai || 0,
                            "Status": row.Status || '',
-                           "STATUS": row.STATUS || 'PENDING',
+                           "STATUS": row.STATUS || 'ON PROGRESS',
                            lastUpdatedBy: currentUser.username, lastUpdatedAt: new Date().toISOString()
                        };
 
