@@ -95,6 +95,57 @@
         /* Dashboard Banner */
         .dash-banner { background-color: var(--sidebar-bg); border-left: 6px solid var(--brand-color); border-radius: 1rem; padding: 1.5rem 2rem; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .dash-banner i.bg-icon { position: absolute; right: -20px; bottom: -30px; font-size: 10rem; color: rgba(255,255,255,0.03); transform: rotate(-15deg); }
+
+        /* --- FULLSCREEN DASHBOARD CSS (Tanpa Scroll) --- */
+        #view-dashboard:fullscreen {
+            background-color: var(--primary-bg);
+            padding: 10px 15px;
+            overflow: hidden; /* Mencegah scroll */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #view-dashboard:fullscreen .dash-banner { 
+            display: none !important; /* Sembunyikan banner di fullscreen agar muat */
+        }
+        #view-dashboard:fullscreen .row {
+            flex: 1;
+            margin-bottom: 8px !important;
+            display: flex;
+        }
+        #view-dashboard:fullscreen .card-custom {
+            margin-bottom: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        #view-dashboard:fullscreen h6 {
+            margin-bottom: 5px !important;
+            font-size: 0.85rem;
+        }
+        #view-dashboard:fullscreen .kpi-value {
+            font-size: 1.6rem;
+        }
+        #view-dashboard:fullscreen .chart-container {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+        #view-dashboard:fullscreen canvas {
+            max-height: 100% !important;
+            height: 100% !important;
+        }
+        #view-dashboard:fullscreen #mapLokasi {
+            height: 100% !important;
+        }
+        #view-dashboard:fullscreen .table-responsive {
+            flex: 1;
+            overflow-y: auto;
+        }
+        #view-dashboard:fullscreen .table-custom th, #view-dashboard:fullscreen .table-custom td {
+            padding: 5px 10px;
+        }
     </style>
 </head>
 <body>
@@ -200,14 +251,15 @@
                             <select class="form-select form-select-sm fw-bold border-dark shadow-sm" style="width: auto;" id="dashFilterStatus" onchange="renderDashboard()">
                                 <option value="ALL">Semua Status (ALL)</option>
                                 <option value="DEAL">Hanya DEAL</option>
-                                <option value="ON PROGRESS">Hanya ON PROGRESS</option>
+                                <option value="IN PROGRESS">Hanya IN PROGRESS</option>
                                 <option value="CANCEL">Hanya CANCEL</option>
                             </select>
                             <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="renderDashboard()"><i class="fas fa-sync-alt me-1"></i> Perbarui</button>
+                            <button class="btn btn-dark btn-sm fw-bold" onclick="toggleFullscreen()"><i class="fas fa-expand me-1" id="fsIcon"></i> Fullscreen</button>
                         </div>
                     </div>
                     
-                    <div class="row g-3 mb-4">
+                    <div class="row g-3 mb-2">
                         <div class="col-md-4">
                             <div class="card-custom text-center h-100 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning">
                                 <div class="kpi-title" id="kpiTitleRev">TOTAL REVENUE (DEAL)</div>
@@ -224,18 +276,30 @@
                         </div>
                         <div class="col-md-4">
                             <div class="card-custom text-center h-100 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
-                                <div class="kpi-title">PROJEK TERTUNDA (ON PROGRESS)</div>
-                                <div class="kpi-value text-danger" id="kpiTotalON PROGRESS">0</div>
+                                <div class="kpi-title" id="kpiTitlePending">PROJEK TERTUNDA (IN PROGRESS)</div>
+                                <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
                                 <div class="small text-muted mt-2 fw-bold"><i class="fas fa-clock text-primary me-1"></i> Keseluruhan Menunggu</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row g-4 mt-2">
+                    <!-- DIAGRAM GARIS (FORECASTING) -->
+                    <div class="row g-4 mt-1 mb-2">
+                        <div class="col-12">
+                            <div class="card-custom h-100 d-flex flex-column">
+                                <h6 class="fw-bold mb-4 text-dark text-center">Forecasting & Tren Revenue (Per Bulan)</h6>
+                                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                                    <canvas id="chartTrend"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mt-1">
                         <div class="col-md-4">
                             <div class="card-custom h-100 d-flex flex-column">
                                 <h6 class="fw-bold mb-4 text-dark text-center">Perbandingan Status</h6>
-                                <div style="position: relative; height: 250px; width: 100%;">
+                                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
                                     <canvas id="chartStatus"></canvas>
                                 </div>
                             </div>
@@ -243,7 +307,7 @@
                         <div class="col-md-4">
                             <div class="card-custom h-100 d-flex flex-column">
                                 <h6 class="fw-bold mb-4 text-dark text-center">Komposisi Jenis Projek</h6>
-                                <div style="position: relative; height: 250px; width: 100%;">
+                                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
                                     <canvas id="chartJenis"></canvas>
                                 </div>
                             </div>
@@ -251,7 +315,7 @@
                         <div class="col-md-4">
                             <div class="card-custom h-100 d-flex flex-column">
                                 <h6 class="fw-bold mb-4 text-dark text-center">Distribusi Top Klien (Nilai)</h6>
-                                <div style="position: relative; height: 250px; width: 100%;">
+                                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
                                     <canvas id="chartClient"></canvas>
                                 </div>
                             </div>
@@ -274,14 +338,16 @@
                         <div class="col-12">
                             <div class="card-custom">
                                 <h6 class="fw-bold mb-4 text-dark"><i class="fas fa-map-marker-alt text-danger me-2"></i>Peta Persebaran Lokasi Projek</h6>
-                                <div id="mapLokasi" style="height: 400px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+                                <div class="chart-container">
+                                    <div id="mapLokasi" style="height: 350px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                 </div>
 
-                <!-- VIEW: DATABASE PROJEK -->
+                <!-- VIEW: DATABASE PROJEK (Pintu Input Ditutup) -->
                 <div id="view-sales" class="view-section fade-in">
                     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                         <h3 class="mb-0 fw-bold">Database Projek</h3>
@@ -289,12 +355,10 @@
                         <div class="d-flex gap-2 flex-wrap">
                             <button class="btn btn-outline-info fw-bold edit-allowed" onclick="window.open('https://docs.google.com/spreadsheets/d/1kL3DUrkRsi1ItPYqfkFbkBQ6j1cRuNGcclUxbhKNF0g/edit?usp=sharing', '_blank')"><i class="fas fa-external-link-alt me-2"></i>Buka Spreadsheet</button>
                             <button class="btn btn-light border fw-bold edit-allowed" onclick="downloadTemplate()"><i class="fas fa-file-excel me-2 text-success"></i>Template</button>
-                            
                             <button class="btn btn-outline-secondary edit-allowed fw-bold" onclick="document.getElementById('importExcelInput').click()"><i class="fas fa-upload me-2"></i>Import Data</button>
                             <input type="file" id="importExcelInput" class="d-none" accept=".xlsx, .xls" onchange="handleImportExcel(event)">
                             
-                            <button class="btn btn-dark edit-allowed fw-bold" onclick="openUpdateStatusModal()"><i class="fas fa-user-tag me-2 text-warning"></i>Update Status</button>
-                            <button class="btn btn-primary edit-allowed fw-bold" onclick="openSalesModal()"><i class="fas fa-plus me-2"></i>Projek Baru</button>
+                            <!-- Tombol Update Status dan Projek Baru telah dihapus sesuai instruksi -->
                         </div>
                     </div>
                     
@@ -316,7 +380,7 @@
                                         <th style="cursor: pointer;" onclick="setSortSales('Lokasi')" title="Klik untuk mengurutkan">Lokasi <i class="fas fa-sort text-muted ms-1"></i></th>
                                         <th style="cursor: pointer;" onclick="setSortSales('amount')" title="Klik untuk mengurutkan">Amount / Nilai <i class="fas fa-sort text-muted ms-1"></i></th>
                                         <th style="cursor: pointer;" onclick="setSortSales('STATUS')" title="Klik untuk mengurutkan">STATUS <i class="fas fa-sort text-muted ms-1"></i></th>
-                                        <th class="edit-allowed text-center">Aksi</th>
+                                        <!-- Kolom AKSI dihapus agar tidak ada pintu input/edit -->
                                     </tr>
                                 </thead>
                                 <tbody><!-- Generated by JS --></tbody>
@@ -335,7 +399,8 @@
                                 <select class="form-select shadow-sm" id="reportFilterStatus">
                                     <option value="ALL">Semua Status (ALL)</option>
                                     <option value="DEAL">Hanya DEAL</option>
-                                    <option value="ON PROGRESS">Hanya ON PROGRESS</option>
+                                    <option value="IN PROGRESS">Hanya IN PROGRESS</option>
+                                    <option value="CANCEL">Hanya CANCEL</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -446,128 +511,6 @@
         </div>
     </div>
 
-    <!-- MODALS SECTION -->
-    
-    <!-- Modal Input/Edit Sales -->
-    <div class="modal fade" id="modalSales" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-dark text-white border-bottom border-4 border-warning">
-                    <h5 class="modal-title fw-bold" id="modalSalesTitle">Form Data Projek</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body position-relative">
-                    <!-- Indikator Update -->
-                    <div id="salesLastUpdated" class="text-end text-muted fst-italic mb-3" style="font-size: 0.75rem; display: none;"></div>
-                    <form id="formSales">
-                        <input type="hidden" id="salesOldNo">
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold small text-muted">Tgl Dibuat</label>
-                                <input type="date" class="form-control" id="salesTgl" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold small text-muted">No. Projek</label>
-                                <input type="text" class="form-control fw-bold" id="salesNo" required placeholder="Cth: 20260430">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold small text-muted">Bulan (MONTH)</label>
-                                <select class="form-select border-dark" id="salesBulan">
-                                    <option value="JAN">JAN</option><option value="FEB">FEB</option><option value="MAR">MAR</option><option value="APR">APR</option>
-                                    <option value="MAY">MAY</option><option value="JUN">JUN</option><option value="JUL">JUL</option><option value="AUG">AUG</option>
-                                    <option value="SEP">SEP</option><option value="OCT">OCT</option><option value="NOV">NOV</option><option value="DEC">DEC</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">Judul Projek</label>
-                            <input type="text" class="form-control" id="salesJudul" required>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-muted">Jenis Projek</label>
-                                <select class="form-select" id="salesJenis">
-                                    <option value="Konsultasi">Konsultasi</option>
-                                    <option value="Program Training">Program Training</option>
-                                    <option value="Sponsorship Fee">Sponsorship Fee</option>
-                                    <option value="Lainnya">Lainnya</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-muted">Nama Klien (Cust name)</label>
-                                <input type="text" class="form-control" id="salesKlien" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-muted">Lokasi</label>
-                                <input type="text" class="form-control" id="salesLokasi" placeholder="Cth: Jakarta, Balikpapan...">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-success">Amount / Nilai</label>
-                                <input type="number" class="form-control fw-bold" id="salesAmount" required placeholder="Hanya Angka (Cth: 25000000)">
-                            </div>
-                        </div>
-                        <div class="row border-top pt-3 mt-1 bg-light rounded p-2 border">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold small text-muted">Status Approval (Internal)</label>
-                                <input type="text" class="form-control" id="salesApprov" placeholder="Cth: APPROVAL">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-primary">STATUS AKHIR</label>
-                                <select class="form-select border-primary fw-bold" id="salesStatusAkhir">
-                                    <option value="DEAL">DEAL</option>
-                                    <option value="ON PROGRESS">ON PROGRESS</option>
-                                    <option value="CANCEL">CANCEL</option>
-                                </select>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" onclick="saveSalesData()"><i class="fas fa-save me-2"></i>Simpan Data</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Update Status Massal -->
-    <div class="modal fade" id="modalUpdateStatus" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-dark text-white border-bottom border-4 border-warning">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-tags me-2 text-warning"></i>Update Status Massal</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="formUpdateStatus">
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Pilih Projek Target</label>
-                            <div class="input-group mb-2 shadow-sm">
-                                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                                <input type="text" class="form-control" id="usSearchSalesInput" placeholder="Ketik No Projek atau Judul..." onkeyup="filterUpdateStatusSales()">
-                            </div>
-                            <select class="form-select bg-light" id="usNoProjek" required></select>
-                        </div>
-                        <div class="mb-3 bg-light p-3 rounded border border-warning">
-                            <label class="form-label fw-bold">Ubah Menjadi Status</label>
-                            <select class="form-select border-dark fw-bold" id="usStatusAkhir">
-                                <option value="DEAL">DEAL</option>
-                                <option value="ON PROGRESS">ON PROGRESS</option>
-                                <option value="CANCEL">CANCEL</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Tutup</button>
-                    <button type="button" class="btn btn-primary" onclick="saveUpdateStatus()"><i class="fas fa-check-circle me-2"></i>Konfirmasi Perubahan</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal Manajemen Akun -->
     <div class="modal fade" id="modalUser" tabindex="-1">
         <div class="modal-dialog">
@@ -628,10 +571,7 @@
         let chartInstances = {};
         let mapInstance = null; 
 
-        // 1. KAMUS KOORDINAT KOTA & KABUPATEN INDONESIA TERLENGKAP
-        // Disalin penuh dari [source: 5]
         const CITY_COORDS = {
-            // Kota Besar
             "Jakarta": [-6.2088, 106.8456], "Surabaya": [-7.2504, 112.7688], "Bandung": [-6.9175, 107.6191], 
             "Medan": [3.5952, 98.6722], "Semarang": [-6.9667, 110.4167], "Makassar": [-5.1476, 119.4327],
             "Palembang": [-2.9909, 104.7566], "Balikpapan": [-1.2379, 116.8529], "Samarinda": [-0.5022, 117.1536], 
@@ -639,7 +579,6 @@
             "Denpasar": [-8.6705, 115.2126], "Manado": [1.4931, 124.8413], "Yogyakarta": [-7.7956, 110.3695], 
             "Batam": [1.0828, 104.0321], "Padang": [-0.9471, 100.3697], "Malang": [-7.9666, 112.6326],
             "Surakarta": [-7.5561, 110.8317], "Solo": [-7.5561, 110.8317], 
-            // Jawa Tengah & DIY
             "Grobogan": [-7.0287, 110.9136], "Demak": [-6.8949, 110.6386], "Pati": [-6.7559, 111.0380], 
             "Kudus": [-6.8048, 110.8405], "Jepara": [-6.5888, 110.6684], "Rembang": [-6.7088, 111.3421], 
             "Boyolali": [-7.5323, 110.5939], "Klaten": [-7.7028, 110.6035], "Sragen": [-7.4275, 110.0223], 
@@ -650,14 +589,12 @@
             "Brebes": [-6.8706, 109.0436], "Pemalang": [-6.8893, 109.3802], "Kendal": [-6.9248, 110.1983],
             "Batang": [-6.9118, 109.7322], "Temanggung": [-7.0142, 110.1706], "Wonosobo": [-7.8164, 109.9048],
             "Banjarnegara": [-7.3940, 109.6974], "Kebumen": [-7.6677, 109.6517], "Purworejo": [-7.7126, 110.0089],
-            // Jawa Barat & Banten
             "Bogor": [-6.5971, 106.7995], "Depok": [-6.4025, 106.7942], "Tangerang": [-6.1702, 106.6403], 
             "Bekasi": [-6.2383, 106.9756], "Cirebon": [-6.7320, 108.5523], "Ciamis": [-7.3270, 108.3533], 
             "Indramayu": [-6.3276, 108.3249], "Garut": [-7.2279, 107.9087], "Tasikmalaya": [-7.3196, 108.2022], 
             "Sukabumi": [-6.9229, 106.9267], "Cianjur": [-6.8161, 107.1425], "Purwakarta": [-6.5387, 107.4480], 
             "Subang": [-6.5684, 107.7667], "Karawang": [-6.3227, 107.3376], "Serang": [-6.1200, 106.1503],
             "Cilegon": [-6.0174, 106.0201], "Pandeglang": [-6.3086, 105.7461], "Lebak": [-6.6450, 106.0617],
-            // Jawa Timur
             "Madiun": [-7.6298, 111.5239], "Kediri": [-7.8165, 112.0119], "Jember": [-8.1725, 113.6995], 
             "Banyuwangi": [-8.2192, 114.3692], "Sidoarjo": [-7.4478, 112.7183], "Gresik": [-7.1620, 112.6515],
             "Tuban": [-6.8950, 111.9056], "Bojonegoro": [-7.1500, 111.8818], "Lamongan": [-6.8967, 112.3333],
@@ -668,7 +605,6 @@
             "Lumajang": [-8.1333, 113.2230], "Bondowoso": [-8.2253, 113.8222], "Situbondo": [-7.7344, 113.9961],
             "Bangkalan": [-7.0270, 112.7441], "Sampang": [-7.1866, 113.2427], "Pamekasan": [-7.1593, 113.4795],
             "Sumenep": [-7.1500, 113.8667],
-            // Luar Jawa (Tambahan)
             "Lampung": [-5.4500, 105.2667], "Jambi": [-1.6108, 103.6141], "Bengkulu": [-3.7928, 102.2608], 
             "Prabumulih": [-3.4286, 104.2333], "Lubuklinggau": [-3.2950, 102.8617], "Pagar Alam": [-4.0150, 103.2661],
             "Banda Aceh": [5.5483, 95.3238], "Mataram": [-8.5833, 116.1167], "Kupang": [-10.1583, 123.5833], 
@@ -676,11 +612,9 @@
             "Jayapura": [-2.5333, 140.7000], "Sorong": [-0.8833, 131.2500], "Timika": [-4.5292, 136.8853], 
             "Merauke": [-8.4667, 140.3333], "Tarakan": [3.3129, 117.5950], "Bontang": [0.1333, 117.5000],
             "Tanjung Selor": [2.8407, 117.3637], "Palangkaraya": [-0.8973, 116.8529], "Berau": [2.0000, 117.3000],
-            "Adaro Tanjung": [-2.1706, 115.3781], // Tabalong, Kalsel
-            "Kalimantan": [-1.2692, 116.8252]
+            "Adaro Tanjung": [-2.1706, 115.3781], "Kalimantan": [-1.2692, 116.8252]
         };
 
-        // Pencarian Koordinat Cerdas (Sesuai Referensi)
         function getMapCoordinates(inputCity) {
             if (!inputCity) return null;
             let search = inputCity.toLowerCase().trim();
@@ -730,20 +664,18 @@
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'COBA LAGI <i class="fas fa-redo ms-2"></i>';
                 }
-                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau status Apps Script (Pastikan sudah dideploy ke publik).', 'error');
+                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau status Apps Script.', 'error');
             }
         }
 
         function getDB(key) { return localDB[key] || []; }
 
-        // ENGINE PENYIMPANAN CERDAS (UPSERT & DELETE)
+        // ENGINE PENYIMPANAN CERDAS
         function saveDB(key, newData) {
             let oldData = localDB[key] || [];
             localDB[key] = newData; 
             
-            if(key === DB_KEY_LOG) {
-                localStorage.setItem('sales_backup_logs', JSON.stringify(newData));
-            }
+            if(key === DB_KEY_LOG) localStorage.setItem('sales_backup_logs', JSON.stringify(newData));
 
             if (newData.length === 0 && oldData.length > 0) {
                 fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "deleteAll", sheetName: DB_MAP[key].sheet }) });
@@ -788,7 +720,7 @@
             return d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'}) + ' ' + d.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'});
         }
 
-        // --- SISTEM AUTENTIKASI (RBAC) ---
+        // --- SISTEM AUTENTIKASI ---
         function togglePassword() {
             const pass = document.getElementById('password');
             const icon = document.getElementById('eyeIcon');
@@ -828,20 +760,14 @@
 
         function logout() {
             addLog('Logout System', 'User keluar dari sistem', 'Sesi diakhiri oleh user.');
-            setTimeout(() => {
-                currentUser = null;
-                document.getElementById('appContainer').classList.add('d-none');
-                document.getElementById('loginScreen').classList.remove('d-none');
-                document.getElementById('loginForm').reset();
-            }, 500);
+            setTimeout(() => { location.reload(); }, 500);
         }
 
         function applyRolePermissions() {
             const edits = document.querySelectorAll('.edit-allowed');
             edits.forEach(el => {
-                if(currentUser.role === 'admin') {
-                    el.style.display = (el.tagName === 'TH' || el.tagName === 'TD') ? 'table-cell' : 'inline-block';
-                } else { el.style.display = 'none'; }
+                if(currentUser.role === 'admin') el.style.display = (el.tagName === 'TH' || el.tagName === 'TD') ? 'table-cell' : 'inline-block';
+                else el.style.display = 'none';
             });
         }
 
@@ -849,6 +775,24 @@
             document.getElementById('sidebar').classList.toggle('collapsed'); 
             setTimeout(() => { if(mapInstance) mapInstance.invalidateSize(); }, 350);
         }
+
+        function toggleFullscreen() {
+            let elem = document.getElementById("view-dashboard");
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => console.log(`Error fullscreen: ${err.message}`));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        document.addEventListener('fullscreenchange', () => {
+            let icon = document.getElementById('fsIcon');
+            if (document.fullscreenElement) {
+                icon.className = 'fas fa-compress me-1';
+            } else {
+                icon.className = 'fas fa-expand me-1';
+            }
+        });
 
         function switchView(viewId, navEl) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -863,7 +807,7 @@
             if(viewId === 'logs') renderLogsTable();
         }
 
-        // --- DASHBOARD ANALYTICS & FILTERING ---
+        // --- DASHBOARD ANALYTICS ---
         function parseAmount(val) {
             if(!val) return 0;
             let str = String(val).replace(/[^0-9,-]+/g,"").replace(/\./g, "").replace(/,/g, ""); 
@@ -875,51 +819,47 @@
             const data = getDB(DB_KEY_SALES);
             const dashFilter = document.getElementById('dashFilterStatus').value; 
             
-            let totalRev = 0; let countFilteredDeal = 0; let countON PROGRESSOrOverall = 0;
+            let totalRev = 0; let countFiltered = 0; let countInProgressOverall = 0;
             let clients = {}; let matrix = {}; let monthsSet = new Set();
-            
-            let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'CANCEL':0 };
+            let statusCounts = { 'DEAL':0, 'IN PROGRESS':0, 'CANCEL':0 };
             let jenisCounts = {};
-            
-            // Variabel penyimpan lokasi untuk Map
-            let cityCountsMap = {};
-            let cityRealNamesMap = {}; 
+            let cityCountsMap = {}; let cityRealNamesMap = {}; 
 
             data.forEach(row => {
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
+                // Normalisasi status pending menjadi IN PROGRESS agar selaras
+                if(status === 'PENDING') status = 'IN PROGRESS'; 
+
                 let amt = parseAmount(row['amount'] || row['Nilai']);
                 let clientName = row['Cust name'] || row['Customer'] || 'Unknown';
                 let bulan = row['MONTH'] || '-';
                 let jenis = row['Jenis'] || 'Lainnya';
                 let lokasiRaw = (row['Lokasi'] || '').trim();
 
+                // Hitung chart status (tanpa filter agar perbandingan utuh)
                 if(statusCounts[status] !== undefined) statusCounts[status]++;
                 else statusCounts[status] = 1;
 
-                if (status === 'ON PROGRESS') countON PROGRESSOrOverall++;
+                if (status === 'IN PROGRESS') countInProgressOverall++;
 
+                // Logika Filter untuk KPI 1 & 2
                 let isPassedFilter = (dashFilter === 'ALL' || status === dashFilter);
 
                 if (isPassedFilter) {
                     if (dashFilter === 'ALL') {
-                        if (status === 'DEAL') { totalRev += amt; countFilteredDeal++; }
+                        if (status === 'DEAL') { totalRev += amt; countFiltered++; }
                     } else {
-                        totalRev += amt;
-                        countFilteredDeal++;
+                        totalRev += amt; countFiltered++;
                     }
                     
-                    if(!clients[clientName]) clients[clientName] = 0;
-                    clients[clientName] += amt;
-
-                    if(!jenisCounts[jenis]) jenisCounts[jenis] = 0;
-                    jenisCounts[jenis]++;
+                    if(!clients[clientName]) clients[clientName] = 0; clients[clientName] += amt;
+                    if(!jenisCounts[jenis]) jenisCounts[jenis] = 0; jenisCounts[jenis]++;
 
                     if(!matrix[jenis]) matrix[jenis] = {};
                     if(!matrix[jenis][bulan]) matrix[jenis][bulan] = 0;
                     matrix[jenis][bulan]++;
                     monthsSet.add(bulan);
                     
-                    // Lokasi Map Processing (Mengikuti logika Referensi Source 3)
                     if(lokasiRaw !== '') {
                         let cleanName = lokasiRaw.toLowerCase().replace(/kabupaten|kab\.|kota/gi, '').trim();
                         cityCountsMap[cleanName] = (cityCountsMap[cleanName] || 0) + 1;
@@ -928,29 +868,30 @@
                 }
             });
 
+            // Update Label KPI Dinamis (Revisi 1 & 2)
+            let filterTextName = dashFilter === 'ALL' ? 'DEAL' : dashFilter;
             document.getElementById('kpiTitleRev').innerText = dashFilter === 'ALL' ? 'TOTAL REVENUE (DEAL)' : `TOTAL NILAI (${dashFilter})`;
+            document.getElementById('kpiTitlePending').innerText = dashFilter === 'ALL' ? 'PROJEK TERTUNDA (IN PROGRESS)' : `PROJEK (${dashFilter})`;
+            
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
-            document.getElementById('kpiTotalDeal').innerText = countFilteredDeal;
-            document.getElementById('kpiTotalON PROGRESS').innerText = countON PROGRESSOrOverall;
+            document.getElementById('kpiTotalDeal').innerText = countFiltered;
+            // KPI 3 menampilkan keseluruhan IN PROGRESS atau khusus sesuai filter yang dipilih
+            document.getElementById('kpiTotalPending').innerText = dashFilter === 'ALL' ? countInProgressOverall : countFiltered;
             
             let topClient = Object.keys(clients).sort((a,b) => clients[b] - clients[a])[0] || 'Belum Ada';
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'USER';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
-            document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${data.length} data projek terdaftar</strong> dengan total <em>revenue</em> DEAL mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
+            // Teks Banner dinamis mengikuti Filter
+            document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${data.length} data projek terdaftar</strong> dengan total <em>revenue</em> ${filterTextName} mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang IN PROGRESS) untuk menjaga efisiensi target korporat.`;
 
             // Matriks Table
             let arrMonths = Array.from(monthsSet).sort();
             let thMonths = arrMonths.map(m => `<th>${m}</th>`).join('');
             let htmlMatriks = `<thead class="table-dark"><tr><th class="text-start">Jenis Projek</th>${thMonths}<th>Total</th></tr></thead><tbody>`;
-            
             for(let jns in matrix) {
                 htmlMatriks += `<tr><td class="fw-bold text-start text-dark">${jns}</td>`;
                 let rowTotal = 0; 
-                arrMonths.forEach(m => { 
-                    let val = matrix[jns][m] || 0; 
-                    rowTotal += val; 
-                    htmlMatriks += `<td class="${val>0?'fw-semibold':''}">${val > 0 ? val : '-'}</td>`; 
-                });
+                arrMonths.forEach(m => { let val = matrix[jns][m] || 0; rowTotal += val; htmlMatriks += `<td class="${val>0?'fw-semibold':''}">${val > 0 ? val : '-'}</td>`; });
                 htmlMatriks += `<td class="fw-bold bg-light text-dark">${rowTotal}</td></tr>`;
             }
             document.getElementById('tblMatriksDashboard').innerHTML = htmlMatriks + `</tbody>`;
@@ -958,47 +899,66 @@
             // --- RENDER GRAFIK ---
             const utColors = ['#FFC000', '#1A1A1A', '#718096', '#E6AC00', '#2D3748', '#CBD5E1'];
             
+            // 1. Chart Klien (Doughnut)
             let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
-            let chartDataClient = sortedClients.map(c => clients[c]);
             if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
             chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
                 type: 'doughnut',
-                data: { labels: sortedClients, datasets: [{ data: chartDataClient, backgroundColor: utColors, borderWidth: 0 }] },
+                data: { labels: sortedClients, datasets: [{ data: sortedClients.map(c => clients[c]), backgroundColor: utColors, borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
+            // 2. Chart Status (Bar)
             if(chartInstances['chartStatus']) chartInstances['chartStatus'].destroy();
             chartInstances['chartStatus'] = new Chart(document.getElementById('chartStatus').getContext('2d'), {
                 type: 'bar',
-                data: { 
-                    labels: Object.keys(statusCounts), 
-                    datasets: [{ 
-                        label: 'Jumlah Projek', 
-                        data: Object.values(statusCounts), 
-                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#718096'], 
-                        borderRadius: 4
-                    }] 
-                },
+                data: { labels: Object.keys(statusCounts), datasets: [{ label: 'Jumlah Projek', data: Object.values(statusCounts), backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#718096'], borderRadius: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
 
-            let labelsJenis = Object.keys(jenisCounts);
-            let dataJenis = Object.values(jenisCounts);
+            // 3. Chart Jenis Projek (Pie)
             if(chartInstances['chartJenis']) chartInstances['chartJenis'].destroy();
             chartInstances['chartJenis'] = new Chart(document.getElementById('chartJenis').getContext('2d'), {
                 type: 'pie',
-                data: { labels: labelsJenis, datasets: [{ data: dataJenis, backgroundColor: utColors, borderWidth: 0 }] },
+                data: { labels: Object.keys(jenisCounts), datasets: [{ data: Object.values(jenisCounts), backgroundColor: utColors, borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // --- RENDER PETA LOKASI DENGAN LOGIKA UT SCHOOL ---
+            // 4. Chart Garis Forecasting / Tren Revenue (Revisi 5)
+            let trendLabels = Array.from(monthsSet).sort();
+            let dataTrendDeal = trendLabels.map(m => {
+                let sum = 0;
+                data.forEach(r => { if((r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') sum += parseAmount(r['amount']||r['Nilai']); });
+                return sum;
+            });
+            let dataTrendProgress = trendLabels.map(m => {
+                let sum = 0;
+                data.forEach(r => { 
+                    let st = String(r['STATUS']||'').toUpperCase().trim();
+                    if((r['MONTH']||'-') === m && (st === 'IN PROGRESS' || st === 'PENDING')) sum += parseAmount(r['amount']||r['Nilai']); 
+                });
+                return sum;
+            });
+
+            if(chartInstances['chartTrend']) chartInstances['chartTrend'].destroy();
+            chartInstances['chartTrend'] = new Chart(document.getElementById('chartTrend').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [
+                        { label: 'Revenue DEAL', data: dataTrendDeal, borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: true, tension: 0.3, borderWidth: 3 },
+                        { label: 'Potensi IN PROGRESS', data: dataTrendProgress, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.3, borderWidth: 3, borderDash: [5, 5] }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+            });
+
+            // --- RENDER PETA LOKASI ---
             initAndPlotMap(cityCountsMap, cityRealNamesMap);
         }
 
         function initAndPlotMap(cityCounts, cityRealNames) {
             if(mapInstance !== null) { mapInstance.remove(); }
-            
-            // Set view awal di tengah Indonesia
             mapInstance = L.map('mapLokasi', { scrollWheelZoom: false }).setView([-2.5, 118.0], 4.5);
 
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -1006,11 +966,13 @@
             }).addTo(mapInstance);
 
             for (let cleanKota in cityCounts) {
-                let coords = getMapCoordinates(cleanKota); // Memanggil kamus CITY_COORDS
+                let coords = getMapCoordinates(cleanKota);
                 if (coords) {
                     let count = cityCounts[cleanKota];
                     let displayNama = cityRealNames[cleanKota];
-                    let radiusSize = 6 + (count * 2.5); // Ukuran dinamis sesuai jumlah data
+                    
+                    // REVISI 3: Ukuran Marker (Lingkaran) diseragamkan agar rapi, tidak ada besar/kecil
+                    let radiusSize = 8; 
                     
                     L.circleMarker(coords, {
                         radius: radiusSize,
@@ -1023,24 +985,16 @@
                       .addTo(mapInstance);
                 }
             }
-
-            // Atasi bug map kelabu jika load di div tersembunyi
             setTimeout(() => { mapInstance.invalidateSize(); }, 500);
         }
 
 
-        // --- MANAJEMEN DATABASE PROJEK (FITUR SORTIR) ---
-        function customSwal(title, text, icon) { Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: '#1A1A1A' }); }
-
+        // --- MANAJEMEN DATABASE PROJEK (FITUR SORTIR & SATU PINTU) ---
         let currentSort = { col: 'Tgl Dibuat', asc: false };
 
         function setSortSales(columnName) {
-            if(currentSort.col === columnName) {
-                currentSort.asc = !currentSort.asc; 
-            } else {
-                currentSort.col = columnName;
-                currentSort.asc = true;
-            }
+            if(currentSort.col === columnName) { currentSort.asc = !currentSort.asc; } 
+            else { currentSort.col = columnName; currentSort.asc = true; }
             renderSalesTable(); 
         }
 
@@ -1048,18 +1002,11 @@
             let data = [...getDB(DB_KEY_SALES)]; 
             const searchVal = (document.getElementById('searchSales')?.value || '').toLowerCase();
             const tbody = document.querySelector('#tblSales tbody');
-            const canEdit = (currentUser && currentUser.role === 'admin');
             
             data.sort((a, b) => {
-                let valA = a[currentSort.col] || '';
-                let valB = b[currentSort.col] || '';
-                
-                if(currentSort.col === 'amount') {
-                    valA = parseAmount(valA); valB = parseAmount(valB);
-                } else if(currentSort.col === 'No. Projek' || currentSort.col === 'Tgl Dibuat') {
-                    valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase();
-                }
-
+                let valA = a[currentSort.col] || ''; let valB = b[currentSort.col] || '';
+                if(currentSort.col === 'amount') { valA = parseAmount(valA); valB = parseAmount(valB); } 
+                else if(currentSort.col === 'No. Projek' || currentSort.col === 'Tgl Dibuat') { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
                 if(valA < valB) return currentSort.asc ? -1 : 1;
                 if(valA > valB) return currentSort.asc ? 1 : -1;
                 return 0;
@@ -1075,8 +1022,7 @@
                 let statClass = status === 'DEAL' ? 'bg-success' : status === 'CANCEL' ? 'bg-danger' : 'bg-warning text-dark';
                 
                 if (String(no).toLowerCase().includes(searchVal) || String(client).toLowerCase().includes(searchVal) || String(title).toLowerCase().includes(searchVal)) {
-                    let action = canEdit ? `<div class="d-flex justify-content-center gap-2"><button class="btn btn-sm btn-outline-primary" onclick="editSales('${no}')"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-outline-danger" onclick="delSales('${no}')"><i class="fas fa-trash"></i></button></div>` : '-';
-                    
+                    // REVISI 4: Menghilangkan kolom Aksi (Edit/Hapus) di Tabel
                     html += `<tr>
                         <td><strong>${no}</strong><br><small class="text-muted">${row['Tgl Dibuat']||'-'}</small></td>
                         <td><div class="fw-bold text-dark text-truncate" style="max-width:250px;" title="${title}">${title}</div><span class="badge border text-dark mt-1">${row['Jenis']}</span></td>
@@ -1084,169 +1030,10 @@
                         <td>${row['Lokasi'] || '-'}</td>
                         <td class="fw-bold text-primary">${formatRp(amt)}</td>
                         <td><span class="badge ${statClass} px-3 py-2">${status}</span></td>
-                        <td class="edit-allowed text-center" style="${canEdit?'':'display:none;'}">${action}</td>
                     </tr>`;
                 }
             });
-            tbody.innerHTML = html || `<tr><td colspan="7" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
-        }
-
-        let salesModalInst;
-        function openSalesModal() {
-            document.getElementById('formSales').reset(); 
-            document.getElementById('salesOldNo').value = ''; 
-            document.getElementById('salesNo').readOnly = false; 
-            document.getElementById('salesLastUpdated').style.display = 'none'; 
-            document.getElementById('modalSalesTitle').innerText = 'Input Projek Baru';
-            if(!salesModalInst) salesModalInst = new bootstrap.Modal(document.getElementById('modalSales')); 
-            salesModalInst.show();
-        }
-
-        function saveSalesData() {
-            let noProj = document.getElementById('salesNo').value.trim();
-            if(!noProj) return customSwal('Error', 'Nomor Projek Wajib diisi', 'error');
-            
-            let data = getDB(DB_KEY_SALES); 
-            let isEdit = document.getElementById('salesOldNo').value !== '';
-            
-            if(!isEdit && data.find(x => String(x['No. Projek']) === String(noProj))) {
-                return customSwal('Error', 'Nomor Projek sudah terdaftar', 'error');
-            }
-            
-            let obj = {
-                "Tgl Dibuat": document.getElementById('salesTgl').value,
-                "No. Projek": noProj,
-                "MONTH": document.getElementById('salesBulan').value,
-                "Judul Projek": document.getElementById('salesJudul').value,
-                "Jenis": document.getElementById('salesJenis').value,
-                "Cust name": document.getElementById('salesKlien').value,
-                "Customer": document.getElementById('salesKlien').value, 
-                "Lokasi": document.getElementById('salesLokasi').value,
-                "amount": document.getElementById('salesAmount').value,
-                "Nilai": document.getElementById('salesAmount').value,
-                "Status": document.getElementById('salesApprov').value,
-                "STATUS": document.getElementById('salesStatusAkhir').value,
-                lastUpdatedBy: currentUser.username,
-                lastUpdatedAt: new Date().toISOString()
-            };
-
-            if(isEdit) { 
-                let oldNo = document.getElementById('salesOldNo').value;
-                let idx = data.findIndex(x => String(x['No. Projek']) === String(oldNo)); 
-                data[idx] = {...data[idx], ...obj}; 
-                addLog('Update Projek', `Mengubah data Projek (No: ${noProj})`, `Pembaruan data melalui form web.\nClient: ${obj["Cust name"]}\nAmount: ${obj.amount}`);
-            } else { 
-                data.push(obj); 
-                addLog('Tambah Projek', `Menambahkan projek baru (No: ${noProj})`, `Penambahan projek baru.\nClient: ${obj["Cust name"]}\nStatus: ${obj.STATUS}`);
-            }
-
-            saveDB(DB_KEY_SALES, data); 
-            salesModalInst.hide(); 
-            customSwal('Berhasil', 'Data projek tersimpan!', 'success'); 
-            renderSalesTable(); 
-            if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
-        }
-
-        function editSales(no) {
-            let r = getDB(DB_KEY_SALES).find(x => String(x['No. Projek']) === String(no)); if(!r) return;
-            document.getElementById('salesOldNo').value = r['No. Projek']; 
-            document.getElementById('salesNo').value = r['No. Projek']; 
-            document.getElementById('salesNo').readOnly = true; 
-            
-            let tgl = r['Tgl Dibuat'];
-            if (tgl && tgl.includes('/')) {
-                let parts = tgl.split('/');
-                if(parts.length === 3) tgl = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-            }
-            
-            document.getElementById('salesTgl').value = tgl || ''; 
-            document.getElementById('salesBulan').value = r['MONTH'] || 'JAN'; 
-            document.getElementById('salesJudul').value = r['Judul Projek'] || ''; 
-            document.getElementById('salesJenis').value = r['Jenis'] || 'Konsultasi'; 
-            document.getElementById('salesKlien').value = r['Cust name'] || r['Customer'] || ''; 
-            document.getElementById('salesLokasi').value = r['Lokasi'] || ''; 
-            document.getElementById('salesAmount').value = parseAmount(r['amount'] || r['Nilai']); 
-            document.getElementById('salesApprov').value = r['Status'] || ''; 
-            document.getElementById('salesStatusAkhir').value = String(r['STATUS']).toUpperCase().trim() || 'ON PROGRESS';
-            
-            let lastUpdBy = r.lastUpdatedBy || 'Sistem';
-            let lastUpdAt = r.lastUpdatedAt || new Date().toISOString();
-            
-            let lastUpdDiv = document.getElementById('salesLastUpdated');
-            lastUpdDiv.innerHTML = `<i class="fas fa-info-circle me-1 text-primary"></i>Terakhir diubah oleh: <strong class="text-dark">${lastUpdBy}</strong>, <span class="text-muted">${formatLogDate(lastUpdAt)}</span>`;
-            lastUpdDiv.style.display = 'block';
-
-            document.getElementById('modalSalesTitle').innerText = 'Edit Data Projek';
-            if(!salesModalInst) salesModalInst = new bootstrap.Modal(document.getElementById('modalSales')); 
-            salesModalInst.show();
-        }
-
-        function delSales(no) {
-            Swal.fire({ title: 'Hapus Projek Permanen?', text: "Data tidak bisa dikembalikan.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus'
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    saveDB(DB_KEY_SALES, getDB(DB_KEY_SALES).filter(x => String(x['No. Projek']) !== String(no))); 
-                    addLog('Hapus Projek', `Menghapus data projek (No: ${no})`, `Data projek dihapus secara permanen dari sistem oleh ${currentUser.username}.`);
-                    renderSalesTable(); 
-                    if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
-                    customSwal('Terhapus!', 'Data ditarik dari sistem.', 'success');
-                }
-            });
-        }
-        
-        function deleteAllSales() {
-            Swal.fire({
-                title: 'HAPUS KESELURUHAN?',
-                text: "Sistem akan dikosongkan secara paksa. Masukkan password Anda untuk melanjutkan:",
-                icon: 'error', input: 'password', inputAttributes: { autocapitalize: 'off' },
-                showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Eksekusi Hapus',
-                preConfirm: (password) => {
-                    if (!password) Swal.showValidationMessage('Password wajib diisi!');
-                    else if (password !== currentUser.password) Swal.showValidationMessage('Password salah! Akses ditolak.');
-                    return password === currentUser.password;
-                }
-            }).then((res) => {
-                if (res.isConfirmed && res.value) { 
-                    saveDB(DB_KEY_SALES, []); 
-                    addLog('Hapus Keseluruhan', `Seluruh data database Projek dikosongkan`, `Penghapusan paksa seluruh tabel Master Sales. Eksekutor: ${currentUser.username}`);
-                    renderSalesTable(); renderDashboard(); customSwal('Terhapus!', 'Database dikosongkan.', 'success'); 
-                }
-            });
-        }
-
-        // UPDATE STATUS MASSAL
-        let updateStatusModalInst; let allSalesForStatusUpdate = [];
-        function openUpdateStatusModal() {
-            document.getElementById('formUpdateStatus').reset(); document.getElementById('usSearchSalesInput').value = '';
-            allSalesForStatusUpdate = getDB(DB_KEY_SALES); populateUpdateStatusDropdown(allSalesForStatusUpdate);
-            if(!updateStatusModalInst) updateStatusModalInst = new bootstrap.Modal(document.getElementById('modalUpdateStatus')); updateStatusModalInst.show();
-        }
-        function populateUpdateStatusDropdown(salesData) {
-            const select = document.getElementById('usNoProjek'); select.innerHTML = '<option value="">-- Pilih Projek --</option>';
-            salesData.forEach(s => { 
-                let statusInd = s.STATUS === 'DEAL' ? '✅' : s.STATUS === 'CANCEL' ? '❌' : '⏳'; 
-                select.innerHTML += `<option value="${s['No. Projek']}">${statusInd} ${s['No. Projek']} - ${s['Cust name']} (${s.STATUS})</option>`; 
-            });
-        }
-        function filterUpdateStatusSales() {
-            const searchVal = document.getElementById('usSearchSalesInput').value.toLowerCase();
-            const filtered = allSalesForStatusUpdate.filter(s => String(s['No. Projek']).toLowerCase().includes(searchVal) || String(s['Judul Projek']||'').toLowerCase().includes(searchVal) || String(s['Cust name']||'').toLowerCase().includes(searchVal));
-            populateUpdateStatusDropdown(filtered); if(filtered.length === 1 && searchVal !== '') { document.getElementById('usNoProjek').value = filtered[0]['No. Projek']; }
-        }
-        function saveUpdateStatus() {
-            const no = document.getElementById('usNoProjek').value; const newStatus = document.getElementById('usStatusAkhir').value;
-            if(!no) return customSwal('Error', 'Silakan pilih projek', 'error');
-            let data = getDB(DB_KEY_SALES); let row = data.find(x => String(x['No. Projek']) === String(no));
-            if(row) {
-                let oldStatus = row.STATUS;
-                row.STATUS = newStatus; 
-                row.lastUpdatedBy = currentUser.username; row.lastUpdatedAt = new Date().toISOString();
-                
-                saveDB(DB_KEY_SALES, data); 
-                addLog('Update Status Massal', `Mengubah status Projek (No: ${no}) menjadi ${newStatus}`, `Perubahan status dieksekusi melalui form Massal.\nNo Projek: ${no}\nStatus Awal: ${oldStatus}\nStatus Baru: ${newStatus}`);
-                updateStatusModalInst.hide(); customSwal('Berhasil', `Status diperbarui menjadi ${newStatus}`, 'success'); 
-                renderSalesTable(); if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard();
-            }
+            tbody.innerHTML = html || `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
         }
 
         // --- MANAJEMEN EXCEL IMPORT / EXPORT ---
@@ -1279,44 +1066,28 @@
                    if(row['No. Projek']) { 
                        let noStr = String(row['No. Projek']).trim();
                        let existingIdx = dataDB.findIndex(x => String(x['No. Projek']) === noStr);
-                       
                        let parsedDate = row['Tgl Dibuat'] ? parseExcelDate(row['Tgl Dibuat']) : '';
                        
                        let rowData = {
-                           "Tgl Dibuat": parsedDate,
-                           "No. Projek": noStr,
-                           "MONTH": row.MONTH || 'JAN',
-                           "Judul Projek": row['Judul Projek'] || '',
-                           "Jenis": row.Jenis || '',
-                           "Cust name": row['Cust name'] || row['Customer'] || '',
-                           "Customer": row['Cust name'] || row['Customer'] || '',
-                           "Lokasi": row.Lokasi || '',
-                           "amount": row.amount || row.Nilai || 0,
-                           "Nilai": row.amount || row.Nilai || 0,
-                           "Status": row.Status || '',
-                           "STATUS": row.STATUS || 'ON PROGRESS',
+                           "Tgl Dibuat": parsedDate, "No. Projek": noStr, "MONTH": row.MONTH || 'JAN',
+                           "Judul Projek": row['Judul Projek'] || '', "Jenis": row.Jenis || '',
+                           "Cust name": row['Cust name'] || row['Customer'] || '', "Customer": row['Cust name'] || row['Customer'] || '',
+                           "Lokasi": row.Lokasi || '', "amount": row.amount || row.Nilai || 0, "Nilai": row.amount || row.Nilai || 0,
+                           "Status": row.Status || '', "STATUS": row.STATUS || 'PENDING',
                            lastUpdatedBy: currentUser.username, lastUpdatedAt: new Date().toISOString()
                        };
 
-                       if (existingIdx > -1) {
-                           dataDB[existingIdx] = rowData; updated++;
-                           logDetails.push(`[UPDATE] No ${noStr} ditimpa dari Excel.`);
-                       } else {
-                           dataDB.push(rowData); added++;
-                           logDetails.push(`[BARU] No ${noStr} ditambahkan dari Excel.`);
-                       }
+                       if (existingIdx > -1) { dataDB[existingIdx] = rowData; updated++; logDetails.push(`[UPDATE] No ${noStr} dari Excel.`); } 
+                       else { dataDB.push(rowData); added++; logDetails.push(`[BARU] No ${noStr} dari Excel.`); }
                    } 
                }); 
-               
                saveDB(DB_KEY_SALES, dataDB); 
                let finalDetailText = logDetails.length > 0 ? logDetails.join('\n') : 'Sistem mengeksekusi import kosong.';
                addLog('Import Data', `Import Excel: ${added} baru, ${updated} update.`, finalDetailText);
-               
                renderSalesTable(); 
-               customSwal('Import Selesai', `${added} data ditambahkan, ${updated} diperbarui.`, 'success'); 
+               Swal.fire('Import Selesai', `${added} ditambahkan, ${updated} diperbarui.`, 'success'); 
                e.target.value = ''; 
-            }; 
-            r.readAsBinaryString(file);
+            }; r.readAsBinaryString(file);
         }
 
         // --- LAPORAN & EKSPOR PDF/EXCEL ---
@@ -1326,7 +1097,8 @@
             const data = getDB(DB_KEY_SALES);
             
             let filtered = data.filter(s => {
-                let matchStat = statFilter === 'ALL' || String(s.STATUS).toUpperCase() === statFilter;
+                let statusNormalize = String(s.STATUS).toUpperCase() === 'PENDING' ? 'IN PROGRESS' : String(s.STATUS).toUpperCase();
+                let matchStat = statFilter === 'ALL' || statusNormalize === statFilter;
                 let matchBln = blnFilter === 'ALL' || String(s.MONTH).toUpperCase() === blnFilter;
                 return matchStat && matchBln;
             });
@@ -1334,24 +1106,18 @@
             let html = '';
             filtered.forEach(e => {
                 let amt = parseAmount(e.amount || e.Nilai);
-                let badgeClass = e.STATUS === 'DEAL' ? 'bg-success' : e.STATUS === 'CANCEL' ? 'bg-danger' : 'bg-warning text-dark';
-                html += `<tr><td>${e['Tgl Dibuat']||'-'}</td><td><strong>${e['No. Projek']}</strong></td><td class="fw-medium text-truncate" style="max-width:200px;" title="${e['Judul Projek']}">${e['Judul Projek']}</td><td>${e.Jenis}</td><td>${e['Cust name']}</td><td>${e.MONTH}</td><td class="text-end fw-bold">${formatRp(amt)}</td><td class="text-center"><span class="badge ${badgeClass}">${e.STATUS}</span></td></tr>`;
+                let stat = String(e.STATUS).toUpperCase() === 'PENDING' ? 'IN PROGRESS' : String(e.STATUS).toUpperCase();
+                let badgeClass = stat === 'DEAL' ? 'bg-success' : stat === 'CANCEL' ? 'bg-danger' : 'bg-warning text-dark';
+                html += `<tr><td>${e['Tgl Dibuat']||'-'}</td><td><strong>${e['No. Projek']}</strong></td><td class="fw-medium text-truncate" style="max-width:200px;" title="${e['Judul Projek']}">${e['Judul Projek']}</td><td>${e.Jenis}</td><td>${e['Cust name']}</td><td>${e.MONTH}</td><td class="text-end fw-bold">${formatRp(amt)}</td><td class="text-center"><span class="badge ${badgeClass}">${stat}</span></td></tr>`;
             });
             document.querySelector('#tblReport tbody').innerHTML = html || '<tr><td colspan="8" class="text-center py-4">Data tidak ditemukan</td></tr>';
-            
             addLog('Filter Laporan', `User menarik laporan (Status: ${statFilter}, Bulan: ${blnFilter})`);
         }
         
-        function exportReportExcel() { 
-            XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('tblReport'), {sheet:"Report"}), "Laporan_Revenue_UT.xlsx"); 
-            addLog('Export Laporan', 'Mencetak Laporan Revenue ke Excel');
-        }
-
+        function exportReportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('tblReport'), {sheet:"Report"}), "Laporan_Revenue_UT.xlsx"); addLog('Export Laporan', 'Mencetak Laporan Revenue ke Excel'); }
         function exportReportPDF() {
             const doc = new window.jspdf.jsPDF('landscape'); doc.setFontSize(16); doc.text("Laporan Sales Canvasing UT", 14, 22); doc.setFontSize(10); doc.text("Diekstrak oleh: " + (currentUser?currentUser.username:'System') + " | Pada: " + new Date().toLocaleDateString(), 14, 28);
-            doc.autoTable({ html: '#tblReport', startY: 34, theme: 'grid', headStyles: { fillColor: [26, 26, 26], textColor: [255, 192, 0] } }); 
-            doc.save('Laporan_Revenue_UT.pdf');
-            addLog('Export Laporan', 'Mencetak Laporan Revenue ke PDF');
+            doc.autoTable({ html: '#tblReport', startY: 34, theme: 'grid', headStyles: { fillColor: [26, 26, 26], textColor: [255, 192, 0] } }); doc.save('Laporan_Revenue_UT.pdf'); addLog('Export Laporan', 'Mencetak Laporan Revenue ke PDF');
         }
 
         // --- FUNGSI TAMPILAN DETAIL LOG ---
@@ -1359,11 +1125,7 @@
             let log = getDB(DB_KEY_LOG).find(l => String(l.id) === String(logId));
             if(!log) return;
             let ext = log.extendedDetail || log.extendeddetail || log.ExtendedDetail || 'Tidak ada riwayat detail tambahan untuk aktivitas ini.';
-            Swal.fire({
-                title: '<div class="fs-4 fw-bold">Detail Perubahan</div>',
-                html: `<div class="text-start text-dark p-3 rounded" style="max-height: 350px; overflow-y: auto; background-color: #F8FAFC; border: 1px solid #E2E8F0; font-family: monospace; white-space: pre-wrap; font-size: 0.85rem; line-height: 1.5;">${ext}</div>`,
-                confirmButtonColor: '#1A1A1A', confirmButtonText: 'Tutup', width: 600
-            });
+            Swal.fire({ title: '<div class="fs-4 fw-bold">Detail Perubahan</div>', html: `<div class="text-start text-dark p-3 rounded" style="max-height: 350px; overflow-y: auto; background-color: #F8FAFC; border: 1px solid #E2E8F0; font-family: monospace; white-space: pre-wrap; font-size: 0.85rem; line-height: 1.5;">${ext}</div>`, confirmButtonColor: '#1A1A1A', confirmButtonText: 'Tutup', width: 600 });
         }
         function renderLogsTable() {
             const logs = getDB(DB_KEY_LOG).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -1391,12 +1153,12 @@
         function openUserModal() { document.getElementById('formUser').reset(); if(!userModalInst) userModalInst = new bootstrap.Modal(document.getElementById('modalUser')); userModalInst.show(); }
         function saveUser() {
             let users = getDB(DB_KEY_USR); let u = document.getElementById('usrName').value.trim(); let p = document.getElementById('usrPass').value; let r = document.getElementById('usrRole').value;
-            if(users.find(x => x.username === u)) return customSwal('Error', 'Username sudah terpakai', 'error');
-            users.push({username: u, password: p, role: r, active: true}); saveDB(DB_KEY_USR, users); userModalInst.hide(); renderUsers(); customSwal('Sukses', 'Akun berhasil dibuat', 'success');
+            if(users.find(x => x.username === u)) return Swal.fire('Error', 'Username sudah terpakai', 'error');
+            users.push({username: u, password: p, role: r, active: true}); saveDB(DB_KEY_USR, users); userModalInst.hide(); renderUsers(); Swal.fire('Sukses', 'Akun berhasil dibuat', 'success');
             addLog('Buat Akun', `Admin membuat akun baru: ${u}`);
         }
         function toggleUser(idx) {
-            let users = getDB(DB_KEY_USR); if(users[idx].username === 'admin') return customSwal('Ditolak', 'Akun Master Admin tidak dapat dimatikan.', 'error');
+            let users = getDB(DB_KEY_USR); if(users[idx].username === 'admin') return Swal.fire('Ditolak', 'Akun Master Admin tidak dapat dimatikan.', 'error');
             users[idx].active = !users[idx].active; saveDB(DB_KEY_USR, users); renderUsers();
             addLog('Update Akun', `Status akun ${users[idx].username} diubah menjadi ${users[idx].active}`);
         }
@@ -1404,7 +1166,7 @@
         // --- PENGATURAN RESET ---
         function resetDatabase() {
             Swal.fire({ title: 'KEMBALIKAN KE PENGATURAN AWAL?', text: "Semua data akan hilang. Ketik 'RESET' untuk mengonfirmasi.", input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Eksekusi'
-            }).then((res) => { if (res.value === 'RESET') { localStorage.clear(); initDB(); customSwal('Selesai', 'Sistem dikembalikan ke setelan awal pabrik.', 'success').then(() => { logout(); }); } else if(res.value) { customSwal('Batal', 'Kata kunci salah.', 'error'); } });
+            }).then((res) => { if (res.value === 'RESET') { localStorage.clear(); initDB(); Swal.fire('Selesai', 'Sistem dikembalikan ke setelan awal pabrik.', 'success').then(() => { logout(); }); } else if(res.value) { Swal.fire('Batal', 'Kata kunci salah.', 'error'); } });
         }
 
         // Jalankan fetch awal secara langsung agar tidak stuck karena loading external map
