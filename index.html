@@ -262,7 +262,7 @@
             letter-spacing: 0.5px; 
         }
         
-        /* PERBAIKAN: Font size responsif (clamp) & word-break agar angka tidak keluar kotak */
+        /* Font size responsif (clamp) & word-break agar angka tidak keluar kotak */
         .kpi-value { 
             font-size: clamp(1.2rem, 1.8vw, 2.2rem); 
             font-weight: 800; 
@@ -350,7 +350,7 @@
         #view-dashboard:fullscreen {
             background-color: var(--primary-bg);
             padding: 15px 20px;
-            overflow: hidden !important; 
+            overflow-y: auto !important; 
             display: flex;
             flex-direction: column;
             height: 100vh !important;
@@ -359,11 +359,18 @@
             gap: 15px;
         }
         
-        /* Banner disembunyikan saat fullscreen agar muat banyak */
         #view-dashboard:fullscreen .dash-banner { 
             display: none !important; 
         }
         
+        /* PERBAIKAN BUG FULLSCREEN CHART: Penambahan min-height: 0 dan flex shrink */
+        #view-dashboard:fullscreen .main-layout-row,
+        #view-dashboard:fullscreen .col-left,
+        #view-dashboard:fullscreen .col-right,
+        #view-dashboard:fullscreen .card-custom {
+            min-height: 0 !important;
+        }
+
         #view-dashboard:fullscreen > .row {
             margin: 0 !important;
             flex-shrink: 0; 
@@ -383,7 +390,6 @@
             font-size: 0.95rem;
         }
 
-        /* PERBAIKAN: kpi-value fullscreen text fit */
         #view-dashboard:fullscreen .kpi-value {
             font-size: clamp(1rem, 1.5vw, 1.5rem);
             margin-top: 2px;
@@ -391,22 +397,30 @@
             overflow-wrap: break-word;
         }
         
-        /* Tinggi Grafik diatur secara proporsional dengan flex-grow */
         #view-dashboard:fullscreen .chart-container {
-            flex: 1; 
-            min-height: 0;
+            flex: 1 1 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
             position: relative;
+        }
+
+        #view-dashboard:fullscreen canvas {
+            max-height: 100% !important;
+            max-width: 100% !important;
+            height: 100% !important;
+            width: 100% !important;
         }
         
         #view-dashboard:fullscreen #mapLokasi {
-            flex: 1;
-            min-height: 0;
+            flex: 1 1 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
             border-radius: 6px;
         }
         
         #view-dashboard:fullscreen .table-responsive {
-            flex: 1;
-            min-height: 0;
+            flex: 1 1 0 !important;
+            min-height: 0 !important;
             overflow-y: auto;
         }
 
@@ -470,7 +484,7 @@
         <!-- SIDEBAR -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-brand">
-                <img src="logo-utschool.png" alt="UT School" style="max-height: 40px; border-radius: 4px; object-fit: contain; background: white; padding: 2px;" onerror="this.src='https://via.placeholder.com/40x40?text=UT';">
+                <img src="logo-utschool.jpg" alt="UT School" style="max-height: 40px; border-radius: 4px; object-fit: contain; background: white; padding: 2px;" onerror="this.src='https://via.placeholder.com/40x40?text=UT';">
                 <span class="nav-text ms-2" style="font-size: 1.3rem;">Sales Pro</span>
             </div>
             <div class="d-flex flex-column mt-4 gap-1">
@@ -572,7 +586,7 @@
                                 <div class="col-md-6">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
                                         <h6 class="fw-bold mb-3 text-dark text-center">Perbandingan Status</h6>
-                                        <div class="chart-container" style="position: relative; height: 200px; width: 100%;">
+                                        <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                             <canvas id="chartStatus"></canvas>
                                         </div>
                                     </div>
@@ -580,7 +594,7 @@
                                 <div class="col-md-6">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
                                         <h6 class="fw-bold mb-3 text-dark text-center">Komposisi Jenis Projek</h6>
-                                        <div class="chart-container" style="position: relative; height: 200px; width: 100%;">
+                                        <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                             <canvas id="chartJenis"></canvas>
                                         </div>
                                     </div>
@@ -590,7 +604,7 @@
                             <!-- Peta Lokasi (Di bawah grafik Kiri) -->
                             <div class="card-custom flex-grow-1 mb-0 d-flex flex-column">
                                 <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-map-marker-alt text-danger me-2"></i>Peta Persebaran Lokasi Projek</h6>
-                                <div id="mapLokasi" style="height: 250px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+                                <div id="mapLokasi" style="position: relative; flex: 1; min-height: 250px; width: 100%; border-radius: 8px; z-index: 1;"></div>
                             </div>
 
                         </div>
@@ -598,10 +612,10 @@
                         <!-- ================= KOLOM KANAN ================= -->
                         <div class="col-xl-5 col-lg-12 col-right d-flex flex-column gap-3">
                             
-                            <!-- Diagram Garis Forecasting -->
+                            <!-- Diagram Garis Forecasting / Gap Analysis -->
                             <div class="card-custom mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark text-center">Forecasting & Tren Revenue (Per Bulan)</h6>
-                                <div class="chart-container" style="position: relative; height: 200px; width: 100%;">
+                                <h6 class="fw-bold mb-3 text-dark text-center">Analisis Gap & Pencapaian Revenue (Per Bulan)</h6>
+                                <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                     <canvas id="chartTrend"></canvas>
                                 </div>
                             </div>
@@ -609,7 +623,7 @@
                             <!-- Distribusi Top Klien -->
                             <div class="card-custom mb-0 d-flex flex-column">
                                 <h6 class="fw-bold mb-3 text-dark text-center">Distribusi Top Klien (Nilai)</h6>
-                                <div class="chart-container" style="position: relative; height: 200px; width: 100%;">
+                                <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                     <canvas id="chartClient"></canvas>
                                 </div>
                             </div>
@@ -1185,7 +1199,7 @@
             let jumlahTeksBanner = dashFilter === 'ALL' ? data.length : countFiltered;
             document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${jumlahTeksBanner} data projek terdaftar</strong> dengan total <em>revenue</em> ${filterTextName} mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
 
-            // URUTAN BULAN KALENDER (Bukan Abjad)
+            // URUTAN BULAN KALENDER
             const monthOrder = { "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12 };
             let arrMonths = Array.from(monthsSet).sort((a, b) => {
                 return (monthOrder[a] || 99) - (monthOrder[b] || 99);
@@ -1259,7 +1273,7 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // 4. Chart Garis Forecasting / Tren Revenue
+            // 4. Chart Garis Gap Analysis / Pencapaian Revenue (Revisi 2)
             let trendLabels = arrMonths; 
             
             // AKTUAL: Hanya status DEAL
@@ -1273,7 +1287,7 @@
                 return sum;
             });
             
-            // FORECAST: Semua status SELAIN Deal dan No Deal (Berarti New & On Progress)
+            // POTENSI: ON PROGRESS & NEW (Selain Deal dan No Deal)
             let dataTrendForecast = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
@@ -1301,7 +1315,7 @@
                             borderWidth: 3 
                         },
                         { 
-                            label: 'Forecast (Selain Deal / No Deal)', 
+                            label: 'Potensi (IN PROGRESS / NEW)', 
                             data: dataTrendForecast, 
                             borderColor: '#f59e0b', 
                             backgroundColor: 'rgba(245, 158, 11, 0.1)', 
@@ -1312,7 +1326,28 @@
                         }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                // Menambahkan kalkulasi persentase gap pada tooltip
+                                afterLabel: function(context) {
+                                    let idx = context.dataIndex;
+                                    let dealVal = dataTrendDeal[idx] || 0;
+                                    let potVal = dataTrendForecast[idx] || 0;
+                                    let total = dealVal + potVal;
+                                    if(total === 0) return 'Pencapaian: 0%';
+                                    let pct = ((dealVal / total) * 100).toFixed(1);
+                                    return `Pencapaian (Win Rate): ${pct}% dari total potensi`;
+                                }
+                            }
+                        }
+                    }, 
+                    scales: { y: { beginAtZero: true } } 
+                }
             });
 
             // --- RENDER PETA LOKASI ---
@@ -1418,7 +1453,7 @@
             tbody.innerHTML = html || `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
         }
 
-        // --- MANAJEMEN EXCEL IMPORT / EXPORT (KOLOM LENGKAP & DINAMIS) ---
+        // --- MANAJEMEN EXCEL IMPORT / EXPORT ---
         function parseExcelDate(serial) { 
             if (typeof serial === 'number') return new Date((Math.floor(serial - 25569) * 86400) * 1000).toISOString().split('T')[0]; 
             if (typeof serial === 'string') { let d = new Date(serial); if(!isNaN(d.getTime())) return d.toISOString().split('T')[0]; } return serial; 
