@@ -96,77 +96,52 @@
         .dash-banner { background-color: var(--sidebar-bg); border-left: 6px solid var(--brand-color); border-radius: 1rem; padding: 1.5rem 2rem; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .dash-banner i.bg-icon { position: absolute; right: -20px; bottom: -30px; font-size: 10rem; color: rgba(255,255,255,0.03); transform: rotate(-15deg); }
 
-        /* --- FULLSCREEN DASHBOARD CSS (SUPER RESPONSIVE NO SCROLL) --- */
+        /* --- FULLSCREEN DASHBOARD CSS (REVISI AUTOFIT ANTI TUMPANG TINDIH) --- */
         #view-dashboard:fullscreen {
             background-color: var(--primary-bg);
-            padding: 10px 15px;
-            overflow: hidden !important; 
+            padding: 15px 20px;
+            overflow-y: auto !important; /* Safety net: Jika layar terlalu kecil, izinkan scroll agar tidak meledak tumpang tindih */
             display: flex;
             flex-direction: column;
             height: 100vh !important;
             width: 100vw !important;
             box-sizing: border-box;
-            gap: 8px;
+            gap: 15px;
         }
         #view-dashboard:fullscreen .dash-banner, 
         #view-dashboard:fullscreen .d-flex.justify-content-between.mb-3 { 
-            display: none !important; 
+            display: none !important; /* Sembunyikan header/banner saat layar penuh */
         }
         #view-dashboard:fullscreen > .row {
             margin: 0 !important;
-            flex: 1 1 0; 
-            min-height: 0;
-            display: flex;
-        }
-        #view-dashboard:fullscreen > .row:first-of-type {
-            flex: 0 0 auto; 
+            flex-shrink: 0; /* Cegah elemen menyusut hingga tumpang tindih */
         }
         #view-dashboard:fullscreen .card-custom {
             height: 100%;
             margin-bottom: 0;
-            padding: 10px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         #view-dashboard:fullscreen h6 {
-            margin-bottom: 5px !important;
-            font-size: 0.85rem;
+            margin-bottom: 8px !important;
+            font-size: 0.95rem;
         }
-        #view-dashboard:fullscreen .kpi-value {
-            font-size: 1.5rem;
-            margin-top: 2px;
-        }
+        /* Pembatasan Tinggi Maksimal Grafik di Fullscreen agar Autofit proporsional */
         #view-dashboard:fullscreen .chart-container {
-            flex: 1;
-            height: auto !important;
-            min-height: 0;
+            height: 25vh !important; /* Paksa tinggi chart maksimal 25% dari layar */
+            min-height: 200px;
             position: relative;
         }
-        #view-dashboard:fullscreen canvas {
-            max-height: 100% !important;
-            height: 100% !important;
-            width: 100% !important;
-        }
         #view-dashboard:fullscreen #mapLokasi {
-            height: 100% !important;
+            height: 30vh !important; /* Paksa tinggi peta maksimal 30% dari layar */
+            min-height: 250px;
             border-radius: 6px;
         }
         #view-dashboard:fullscreen .table-responsive {
-            flex: 1;
-            min-height: 0;
+            max-height: 20vh; /* Paksa tinggi tabel matriks */
             overflow-y: auto;
-        }
-        #view-dashboard:fullscreen .table-custom th, 
-        #view-dashboard:fullscreen .table-custom td {
-            padding: 4px 8px;
-            font-size: 0.75rem;
-        }
-        #view-dashboard:fullscreen .col-md-4, 
-        #view-dashboard:fullscreen .col-12 {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
         }
     </style>
 </head>
@@ -216,7 +191,7 @@
         <!-- SIDEBAR -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-brand">
-                <img src="logo-utschool.png" alt="UT School" style="max-height: 40px; border-radius: 4px; object-fit: contain; background: white; padding: 2px;" onerror="this.src='https://via.placeholder.com/40x40?text=UT';">
+                <img src="logo-utschool.jpg" alt="UT School" style="max-height: 40px; border-radius: 4px; object-fit: contain; background: white; padding: 2px;" onerror="this.src='https://via.placeholder.com/40x40?text=UT';">
                 <span class="nav-text ms-2" style="font-size: 1.3rem;">Sales Pro</span>
             </div>
             <div class="d-flex flex-column mt-4 gap-1">
@@ -275,7 +250,7 @@
                                 <option value="ON PROGRESS">Hanya ON PROGRESS</option>
                                 <option value="NEW">Hanya NEW</option>
                                 <option value="NO DEAL">Hanya NO DEAL</option>
-                                <option value="CANCEL">Hanya CANCEL</option>
+                                <!-- Opsi CANCEL dihapus sesuai instruksi -->
                             </select>
                             <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="renderDashboard()"><i class="fas fa-sync-alt me-1"></i> Perbarui</button>
                             <button class="btn btn-dark btn-sm fw-bold" onclick="toggleFullscreen()"><i class="fas fa-expand me-1" id="fsIcon"></i> Fullscreen</button>
@@ -311,7 +286,7 @@
                         <div class="col-12">
                             <div class="card-custom h-100 d-flex flex-column">
                                 <h6 class="fw-bold mb-4 text-dark text-center">Forecasting & Tren Revenue (Per Bulan)</h6>
-                                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                                <div class="chart-container" style="position: relative; width: 100%;">
                                     <canvas id="chartTrend"></canvas>
                                 </div>
                             </div>
@@ -322,7 +297,7 @@
                         <div class="col-md-4">
                             <div class="card-custom h-100 d-flex flex-column">
                                 <h6 class="fw-bold mb-4 text-dark text-center">Perbandingan Status</h6>
-                                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                                <div class="chart-container" style="position: relative; width: 100%;">
                                     <canvas id="chartStatus"></canvas>
                                 </div>
                             </div>
@@ -330,7 +305,7 @@
                         <div class="col-md-4">
                             <div class="card-custom h-100 d-flex flex-column">
                                 <h6 class="fw-bold mb-4 text-dark text-center">Komposisi Jenis Projek</h6>
-                                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                                <div class="chart-container" style="position: relative; width: 100%;">
                                     <canvas id="chartJenis"></canvas>
                                 </div>
                             </div>
@@ -338,7 +313,7 @@
                         <div class="col-md-4">
                             <div class="card-custom h-100 d-flex flex-column">
                                 <h6 class="fw-bold mb-4 text-dark text-center">Distribusi Top Klien (Nilai)</h6>
-                                <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+                                <div class="chart-container" style="position: relative; width: 100%;">
                                     <canvas id="chartClient"></canvas>
                                 </div>
                             </div>
@@ -362,7 +337,7 @@
                             <div class="card-custom">
                                 <h6 class="fw-bold mb-4 text-dark"><i class="fas fa-map-marker-alt text-danger me-2"></i>Peta Persebaran Lokasi Projek</h6>
                                 <div class="chart-container">
-                                    <div id="mapLokasi" style="height: 350px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+                                    <div id="mapLokasi" style="width: 100%; border-radius: 8px; z-index: 1;"></div>
                                 </div>
                             </div>
                         </div>
@@ -417,7 +392,7 @@
                                     <option value="ON PROGRESS">Hanya ON PROGRESS</option>
                                     <option value="NEW">Hanya NEW</option>
                                     <option value="NO DEAL">Hanya NO DEAL</option>
-                                    <option value="CANCEL">Hanya CANCEL</option>
+                                    <!-- CANCEL dihapus -->
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -645,7 +620,7 @@
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'COBA LAGI <i class="fas fa-redo ms-2"></i>';
                 }
-                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau status Apps Script (Pastikan sudah dideploy ke publik).', 'error');
+                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau status Apps Script.', 'error');
             }
         }
 
@@ -803,15 +778,21 @@
             let totalRev = 0; let countFiltered = 0; let countInProgressOverall = 0;
             let clients = {}; let matrix = {}; let monthsSet = new Set();
             
-            // Variabel Penampung Grafik
-            let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0, 'CANCEL':0 };
+            // Variabel Penampung Grafik (CANCEL DIHAPUS)
+            let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0 };
             let jenisCounts = {};
             let cityCountsMap = {}; let cityRealNamesMap = {}; 
 
             data.forEach(row => {
-                // NORMALISASI STATUS (REVISI 1)
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
-                if(status === 'PENDING' || status === 'IN PROGRESS') status = 'ON PROGRESS'; 
+                
+                // Normalisasi PENDING menjadi ON PROGRESS agar match dengan array
+                if(status === 'PENDING') status = 'ON PROGRESS'; 
+
+                // Jika data excel ada yang aneh atau kosong, abaikan dari chart status utama
+                if(statusCounts[status] !== undefined) {
+                    statusCounts[status]++;
+                }
 
                 let amt = parseAmount(row['amount'] || row['Nilai']);
                 let clientName = row['Cust name'] || row['Customer'] || 'Unknown';
@@ -819,21 +800,19 @@
                 let jenis = row['Jenis'] || 'Lainnya';
                 let lokasiRaw = (row['Lokasi'] || '').trim();
 
-                // Hitung chart status (Semua Data agar utuh)
-                if(statusCounts[status] !== undefined) statusCounts[status]++;
-                else statusCounts[status] = 1;
-
                 if (status === 'ON PROGRESS') countInProgressOverall++;
 
-                // Logika Filter untuk KPI (REVISI 2)
+                // Logika Filter untuk KPI
                 let isPassedFilter = (dashFilter === 'ALL' || status === dashFilter);
 
                 if (isPassedFilter) {
-                    countFiltered++; // Hitung total baris yang lolos filter
+                    countFiltered++; 
                     
                     if (dashFilter === 'ALL') {
+                        // Jika ALL, hanya hitung uang dari DEAL
                         if (status === 'DEAL') { totalRev += amt; }
                     } else {
+                        // Jika filter spesifik, hitung uang sesuai filter tersebut
                         totalRev += amt;
                     }
                     
@@ -853,21 +832,22 @@
                 }
             });
 
-            // Update Label KPI Dinamis (Revisi 2)
+            // Update Label KPI Dinamis
             let filterTextName = dashFilter === 'ALL' ? 'DEAL' : dashFilter;
             document.getElementById('kpiTitleRev').innerText = dashFilter === 'ALL' ? 'TOTAL REVENUE (DEAL)' : `TOTAL NILAI (${dashFilter})`;
             document.getElementById('kpiTitlePending').innerText = dashFilter === 'ALL' ? 'PROJEK TERTUNDA (ON PROGRESS)' : `PROJEK (${dashFilter})`;
             
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
-            document.getElementById('kpiTotalDeal').innerText = countFiltered;
-            // KPI 3 menampilkan keseluruhan ON PROGRESS atau khusus sesuai filter yang dipilih
+            // REVISI 2: Total Projek jika ALL harus berjumlah semua baris data (misal 430)
+            document.getElementById('kpiTotalDeal').innerText = dashFilter === 'ALL' ? data.length : countFiltered;
             document.getElementById('kpiTotalPending').innerText = dashFilter === 'ALL' ? countInProgressOverall : countFiltered;
             
             let topClient = Object.keys(clients).sort((a,b) => clients[b] - clients[a])[0] || 'Belum Ada';
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'ADMIN';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
             // Teks Banner dinamis mengikuti Filter
-            document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${data.length} data projek terdaftar</strong> dengan total <em>revenue</em> ${filterTextName} mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
+            let jumlahTeksBanner = dashFilter === 'ALL' ? data.length : countFiltered;
+            document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${jumlahTeksBanner} data projek terdaftar</strong> dengan total <em>revenue</em> ${filterTextName} mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
 
             // Matriks Table
             let arrMonths = Array.from(monthsSet).sort();
@@ -894,12 +874,12 @@
             });
 
             // 2. Chart Status (Bar)
-            let sortedStatusKeys = ['DEAL', 'ON PROGRESS', 'CANCEL', 'NEW', 'NO DEAL'];
+            let sortedStatusKeys = ['DEAL', 'ON PROGRESS', 'NEW', 'NO DEAL'];
             let sortedStatusData = sortedStatusKeys.map(k => statusCounts[k]);
             if(chartInstances['chartStatus']) chartInstances['chartStatus'].destroy();
             chartInstances['chartStatus'] = new Chart(document.getElementById('chartStatus').getContext('2d'), {
                 type: 'bar',
-                data: { labels: sortedStatusKeys, datasets: [{ label: 'Jumlah Projek', data: sortedStatusData, backgroundColor: ['#22c55e', '#718096', '#ef4444', '#14b8a6', '#f59e0b'], borderRadius: 4 }] },
+                data: { labels: sortedStatusKeys, datasets: [{ label: 'Jumlah Projek', data: sortedStatusData, backgroundColor: ['#22c55e', '#718096', '#14b8a6', '#ef4444'], borderRadius: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
 
@@ -911,19 +891,28 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // 4. Chart Garis Forecasting / Tren Revenue (Revisi 5)
+            // 4. Chart Garis Forecasting / Tren Revenue (Revisi 2)
             let trendLabels = Array.from(monthsSet).sort();
+            
+            // AKTUAL: Hanya status DEAL
             let dataTrendDeal = trendLabels.map(m => {
                 let sum = 0;
-                data.forEach(r => { if((r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') sum += parseAmount(r['amount']||r['Nilai']); });
+                data.forEach(r => { 
+                    if((r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
+                        sum += parseAmount(r['amount']||r['Nilai']); 
+                    }
+                });
                 return sum;
             });
-            let dataTrendProgress = trendLabels.map(m => {
+            
+            // FORECAST: Semua status SELAIN Deal, No Deal, dan Cancel
+            let dataTrendForecast = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
                     let st = String(r['STATUS']||'').toUpperCase().trim();
-                    if(st === 'PENDING' || st === 'IN PROGRESS') st = 'ON PROGRESS';
-                    if((r['MONTH']||'-') === m && st === 'ON PROGRESS') sum += parseAmount(r['amount']||r['Nilai']); 
+                    if((r['MONTH']||'-') === m && st !== 'DEAL' && st !== 'NO DEAL' && st !== 'CANCEL') {
+                        sum += parseAmount(r['amount']||r['Nilai']); 
+                    }
                 });
                 return sum;
             });
@@ -934,8 +923,8 @@
                 data: {
                     labels: trendLabels,
                     datasets: [
-                        { label: 'Revenue DEAL', data: dataTrendDeal, borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: true, tension: 0.4, borderWidth: 3 },
-                        { label: 'Potensi ON PROGRESS', data: dataTrendProgress, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4, borderWidth: 3, borderDash: [5, 5] }
+                        { label: 'Aktual (DEAL)', data: dataTrendDeal, borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: true, tension: 0.4, borderWidth: 3 },
+                        { label: 'Forecast (Selain Deal / No Deal)', data: dataTrendForecast, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.1)', fill: true, tension: 0.4, borderWidth: 3, borderDash: [5, 5] }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
@@ -1008,10 +997,9 @@
                 
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
                 if(status === 'PENDING' || status === 'IN PROGRESS') status = 'ON PROGRESS';
-                let statClass = status === 'DEAL' ? 'bg-success' : status === 'CANCEL' || status === 'NO DEAL' ? 'bg-danger' : status === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
+                let statClass = status === 'DEAL' ? 'bg-success' : status === 'NO DEAL' ? 'bg-danger' : status === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
                 
                 if (String(no).toLowerCase().includes(searchVal) || String(client).toLowerCase().includes(searchVal) || String(title).toLowerCase().includes(searchVal)) {
-                    // REVISI 4: Menghilangkan kolom Aksi Edit/Hapus sepenuhnya
                     html += `<tr>
                         <td><strong>${no}</strong><br><small class="text-muted">${row['Tgl Dibuat']||'-'}</small></td>
                         <td><div class="fw-bold text-dark text-truncate" style="max-width:250px;" title="${title}">${title}</div><span class="badge border text-dark mt-1">${row['Jenis']}</span></td>
@@ -1044,7 +1032,7 @@
                 let amt = parseAmount(e.amount || e.Nilai);
                 let stat = String(e.STATUS || '').toUpperCase().trim();
                 if(stat === 'PENDING' || stat === 'IN PROGRESS') stat = 'ON PROGRESS';
-                let badgeClass = stat === 'DEAL' ? 'bg-success' : stat === 'CANCEL' || stat === 'NO DEAL' ? 'bg-danger' : stat === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
+                let badgeClass = stat === 'DEAL' ? 'bg-success' : stat === 'NO DEAL' ? 'bg-danger' : stat === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
                 
                 html += `<tr><td>${e['Tgl Dibuat']||'-'}</td><td><strong>${e['No. Projek']}</strong></td><td class="fw-medium text-truncate" style="max-width:200px;" title="${e['Judul Projek']}">${e['Judul Projek']}</td><td>${e.Jenis}</td><td>${e['Cust name']}</td><td>${e.MONTH}</td><td class="text-end fw-bold">${formatRp(amt)}</td><td class="text-center"><span class="badge ${badgeClass}">${stat}</span></td></tr>`;
             });
