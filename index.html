@@ -262,7 +262,6 @@
             letter-spacing: 0.5px; 
         }
         
-        /* Font size responsif (clamp) & word-break agar angka tidak keluar kotak */
         .kpi-value { 
             font-size: clamp(1.2rem, 1.8vw, 2.2rem); 
             font-weight: 800; 
@@ -346,11 +345,11 @@
             transform: rotate(-15deg); 
         }
 
-        /* --- TATA LETAK BARU: FULLSCREEN CSS --- */
+        /* --- TATA LETAK BARU: PERBAIKAN FULLSCREEN CSS (Anti Rusak/Tumpang Tindih) --- */
         #view-dashboard:fullscreen {
             background-color: var(--primary-bg);
             padding: 15px 20px;
-            overflow-y: auto !important; 
+            overflow: hidden !important; 
             display: flex;
             flex-direction: column;
             height: 100vh !important;
@@ -363,58 +362,102 @@
             display: none !important; 
         }
         
-        /* PERBAIKAN BUG FULLSCREEN CHART: Penambahan min-height: 0 dan flex shrink */
-        #view-dashboard:fullscreen .main-layout-row,
-        #view-dashboard:fullscreen .col-left,
-        #view-dashboard:fullscreen .col-right,
-        #view-dashboard:fullscreen .card-custom {
-            min-height: 0 !important;
+        #view-dashboard:fullscreen .main-layout-row {
+            flex: 1;
+            margin: 0 !important;
+            min-height: 0; 
+            display: flex;
+            flex-wrap: nowrap !important;
+            gap: 15px;
         }
 
-        #view-dashboard:fullscreen > .row {
-            margin: 0 !important;
-            flex-shrink: 0; 
+        #view-dashboard:fullscreen .col-left {
+            width: 60% !important;
+            flex: none !important;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 0 !important;
+        }
+
+        #view-dashboard:fullscreen .col-right {
+            width: 40% !important;
+            flex: none !important;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 0 !important;
         }
         
+        /* Memaksa batas proporsional antar baris di kiri */
+        #view-dashboard:fullscreen .fs-kpi-row {
+            margin: 0 !important;
+            flex: 0 0 auto;
+        }
+        
+        #view-dashboard:fullscreen .fs-chart-row {
+            margin: 0 !important;
+            flex: 1 1 0;
+            display: flex;
+            flex-wrap: nowrap !important;
+            gap: 15px;
+            min-height: 0;
+        }
+        
+        #view-dashboard:fullscreen .fs-chart-row > .col-md-6 {
+            flex: 1;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            width: 50% !important;
+        }
+        
+        /* Modifikasi Card agar seragam di Fullscreen */
         #view-dashboard:fullscreen .card-custom {
             height: 100%;
-            margin-bottom: 0;
-            padding: 15px;
+            margin-bottom: 0 !important;
+            padding: 10px 15px !important;
             display: flex;
             flex-direction: column;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex: 1 1 0; 
+            min-height: 0;
+        }
+        
+        #view-dashboard:fullscreen .fs-map-card {
+            flex: 1.2 1 0 !important; 
         }
         
         #view-dashboard:fullscreen h6 {
-            margin-bottom: 8px !important;
-            font-size: 0.95rem;
+            margin-bottom: 5px !important;
+            font-size: 0.85rem;
+            flex-shrink: 0; 
         }
 
         #view-dashboard:fullscreen .kpi-value {
-            font-size: clamp(1rem, 1.5vw, 1.5rem);
+            font-size: clamp(1.2rem, 1.8vw, 1.8rem);
             margin-top: 2px;
             word-break: break-word;
             overflow-wrap: break-word;
         }
         
+        /* Rahasia utama agar Chart.js tidak "meledak" */
         #view-dashboard:fullscreen .chart-container {
-            flex: 1 1 0 !important;
-            height: auto !important;
+            flex: 1 1 0 !important; 
             min-height: 0 !important;
+            height: 100% !important;
             position: relative;
         }
-
+        
         #view-dashboard:fullscreen canvas {
             max-height: 100% !important;
             max-width: 100% !important;
-            height: 100% !important;
-            width: 100% !important;
         }
         
         #view-dashboard:fullscreen #mapLokasi {
             flex: 1 1 0 !important;
-            height: auto !important;
             min-height: 0 !important;
+            height: 100% !important;
             border-radius: 6px;
         }
         
@@ -423,18 +466,11 @@
             min-height: 0 !important;
             overflow-y: auto;
         }
-
-        #view-dashboard:fullscreen .main-layout-row {
-            flex: 1;
-            margin: 0 !important;
-            min-height: 0; 
-        }
-
-        #view-dashboard:fullscreen .col-left,
-        #view-dashboard:fullscreen .col-right {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
+        
+        #view-dashboard:fullscreen .table-custom th, 
+        #view-dashboard:fullscreen .table-custom td {
+            padding: 4px 8px;
+            font-size: 0.75rem;
         }
     </style>
 </head>
@@ -533,31 +569,32 @@
                         </div>
                     </div>
 
+                    <!-- Header & Filter (Selalu tampil meski Fullscreen) -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <h5 class="mb-0 fw-bold">Key Performance Indicators</h5>
+                        <div class="d-flex gap-2 align-items-center">
+                            <label class="form-label mb-0 small fw-bold text-muted d-none d-sm-block">Filter Tampilan:</label>
+                            <select class="form-select form-select-sm fw-bold border-dark shadow-sm" style="width: auto;" id="dashFilterStatus" onchange="renderDashboard()">
+                                <option value="ALL">Semua Status (ALL)</option>
+                                <option value="DEAL">Hanya DEAL</option>
+                                <option value="ON PROGRESS">Hanya ON PROGRESS</option>
+                                <option value="NEW">Hanya NEW</option>
+                                <option value="NO DEAL">Hanya NO DEAL</option>
+                            </select>
+                            <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="renderDashboard()"><i class="fas fa-sync-alt me-1"></i> Perbarui</button>
+                            <button class="btn btn-dark btn-sm fw-bold" onclick="toggleFullscreen()"><i class="fas fa-expand me-1" id="fsIcon"></i> Fullscreen</button>
+                        </div>
+                    </div>
+
                     <!-- GRID DUA KOLOM -->
                     <div class="row g-4 main-layout-row">
                         
                         <!-- ================= KOLOM KIRI ================= -->
-                        <div class="col-xl-7 col-lg-12 col-left d-flex flex-column gap-3">
+                        <div class="col-xl-7 col-lg-12 col-left">
                             
-                            <!-- Header & Filter -->
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                                <h5 class="mb-0 fw-bold">Key Performance Indicators</h5>
-                                <div class="d-flex gap-2 align-items-center">
-                                    <label class="form-label mb-0 small fw-bold text-muted d-none d-sm-block">Filter Tampilan:</label>
-                                    <select class="form-select form-select-sm fw-bold border-dark shadow-sm" style="width: auto;" id="dashFilterStatus" onchange="renderDashboard()">
-                                        <option value="ALL">Semua Status (ALL)</option>
-                                        <option value="DEAL">Hanya DEAL</option>
-                                        <option value="ON PROGRESS">Hanya ON PROGRESS</option>
-                                        <option value="NEW">Hanya NEW</option>
-                                        <option value="NO DEAL">Hanya NO DEAL</option>
-                                    </select>
-                                    <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="renderDashboard()"><i class="fas fa-sync-alt me-1"></i> Perbarui</button>
-                                    <button class="btn btn-dark btn-sm fw-bold" onclick="toggleFullscreen()"><i class="fas fa-expand me-1" id="fsIcon"></i> Fullscreen</button>
-                                </div>
-                            </div>
-
                             <!-- 3 KPI Cards -->
-                            <div class="row g-3">
+                            <!-- Menggunakan class khusus pembantu grid fullscreen -->
+                            <div class="row g-3 fs-kpi-row">
                                 <div class="col-md-4">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning">
                                         <div class="kpi-title" id="kpiTitleRev">TOTAL REVENUE (DEAL)</div>
@@ -582,7 +619,7 @@
                             </div>
 
                             <!-- 2 Grafik Sejajar (Status & Jenis) -->
-                            <div class="row g-3">
+                            <div class="row g-3 fs-chart-row">
                                 <div class="col-md-6">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
                                         <h6 class="fw-bold mb-3 text-dark text-center">Perbandingan Status</h6>
@@ -602,9 +639,9 @@
                             </div>
 
                             <!-- Peta Lokasi (Di bawah grafik Kiri) -->
-                            <div class="card-custom flex-grow-1 mb-0 d-flex flex-column">
+                            <div class="card-custom flex-grow-1 mb-0 d-flex flex-column fs-map-card mt-3">
                                 <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-map-marker-alt text-danger me-2"></i>Peta Persebaran Lokasi Projek</h6>
-                                <div id="mapLokasi" style="position: relative; flex: 1; min-height: 250px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+                                <div id="mapLokasi" style="height: 350px; width: 100%; border-radius: 8px; z-index: 1;"></div>
                             </div>
 
                         </div>
@@ -1273,7 +1310,7 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
             });
 
-            // 4. Chart Garis Gap Analysis / Pencapaian Revenue (Revisi 2)
+            // 4. Chart Garis Gap Analysis & Pencapaian
             let trendLabels = arrMonths; 
             
             // AKTUAL: Hanya status DEAL
@@ -1287,7 +1324,7 @@
                 return sum;
             });
             
-            // POTENSI: ON PROGRESS & NEW (Selain Deal dan No Deal)
+            // POTENSI: ON PROGRESS & NEW
             let dataTrendForecast = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
@@ -1333,7 +1370,6 @@
                         legend: { position: 'bottom' },
                         tooltip: {
                             callbacks: {
-                                // Menambahkan kalkulasi persentase gap pada tooltip
                                 afterLabel: function(context) {
                                     let idx = context.dataIndex;
                                     let dealVal = dataTrendDeal[idx] || 0;
