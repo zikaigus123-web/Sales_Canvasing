@@ -611,25 +611,31 @@
                         <!-- ================= KOLOM KIRI ================= -->
                         <div class="col-xl-7 col-lg-12 col-left">
                             
-                            <!-- 3 KPI Cards -->
+                            <!-- 4 KPI Cards (Disesuaikan dengan penambahan Total Project Amount) -->
                             <div class="row g-3 fs-kpi-row">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning">
-                                        <!-- REVISI 1: Teks KPI 1 Menjadi TOTAL PROJECT AMOUNT -->
                                         <div class="kpi-title" id="kpiTitleRev">TOTAL PROJECT AMOUNT (DEAL)</div>
                                         <div class="kpi-value text-success" id="kpiRevenue">Rp 0</div>
                                         <div class="small text-muted mt-2 fw-bold"><i class="fas fa-money-bill-wave text-primary me-1"></i> Berdasarkan Filter</div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
+                                    <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-info">
+                                        <!-- FITUR BARU: Total Project Amount Keseluruhan -->
+                                        <div class="kpi-title" id="kpiTitleTotalAmount">TOTAL PROJECT AMOUNT (ALL)</div>
+                                        <div class="kpi-value text-info" id="kpiTotalAmount">Rp 0</div>
+                                        <div class="small text-muted mt-2 fw-bold"><i class="fas fa-coins text-primary me-1"></i> Keseluruhan (Filtered)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-dark">
-                                        <!-- REVISI 6: Total Projek sesuai format foto 6 -->
                                         <div class="kpi-title">TOTAL PROJEK (FILTERED)</div>
                                         <div class="kpi-value" id="kpiTotalDeal">0</div>
                                         <div class="small text-muted mt-2 fw-bold"><i class="fas fa-check-circle text-primary me-1"></i> Terdaftar di sistem</div>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
                                         <div class="kpi-title" id="kpiTitlePending">PROJEK TERTUNDA (ON PROGRESS)</div>
                                         <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
@@ -669,7 +675,7 @@
                         <!-- ================= KOLOM KANAN ================= -->
                         <div class="col-xl-5 col-lg-12 col-right d-flex flex-column gap-3">
                             
-                            <!-- REVISI 4: Diagram Garis Actual and Potential Revenue -->
+                            <!-- Diagram Garis Forecasting / Gap Analysis -->
                             <div class="card-custom mb-0 d-flex flex-column">
                                 <h6 class="fw-bold mb-3 text-dark text-center">Actual and Potential Revenue Sales Forces</h6>
                                 <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
@@ -891,7 +897,6 @@
     <!-- Bootstrap & ChartJS Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FITUR BARU: Chart DataLabels Plugin untuk persentase di dalam grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -1172,6 +1177,7 @@
             const dashFilterBulan = document.getElementById('dashFilterBulan').value; 
             
             let totalRev = 0; 
+            let totalAmountFiltered = 0; 
             let countFiltered = 0; 
             let countInProgressOverall = 0;
             
@@ -1179,6 +1185,7 @@
             let matrix = {}; 
             let monthsSet = new Set();
             
+            // Variabel Penampung Grafik
             let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0 };
             let jenisCounts = {};
             let cityCountsMap = {}; 
@@ -1187,6 +1194,7 @@
             data.forEach(row => {
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
                 
+                // Normalisasi PENDING menjadi ON PROGRESS
                 if(status === 'PENDING') {
                     status = 'ON PROGRESS'; 
                 }
@@ -1200,13 +1208,16 @@
                 let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
+                // Hitung chart status (Berdasarkan filter bulan agar sinkron)
                 if(isPassedBulan) {
                     if(statusCounts[status] !== undefined) statusCounts[status]++;
                     if (status === 'ON PROGRESS') countInProgressOverall++;
                 }
 
+                // Logika Filter untuk KPI, Map, dan Matrix
                 if (isPassedStatus && isPassedBulan) {
                     countFiltered++; 
+                    totalAmountFiltered += amt;
                     
                     if (dashFilterStatus === 'ALL') {
                         if (status === 'DEAL') { 
@@ -1236,14 +1247,17 @@
                 }
             });
 
-            // REVISI 1: Mengubah Teks KPI Total Revenue Menjadi TOTAL PROJECT AMOUNT
+            // Update Label KPI Dinamis
             let filterTextName = dashFilterStatus === 'ALL' ? 'DEAL' : dashFilterStatus;
             document.getElementById('kpiTitleRev').innerText = dashFilterStatus === 'ALL' ? 'TOTAL PROJECT AMOUNT (DEAL)' : `TOTAL PROJECT AMOUNT (${dashFilterStatus})`;
+            document.getElementById('kpiTitleTotalAmount').innerText = dashFilterStatus === 'ALL' ? 'TOTAL PROJECT AMOUNT (ALL)' : `TOTAL PROJECT AMOUNT (${dashFilterStatus})`;
             document.getElementById('kpiTitlePending').innerText = dashFilterStatus === 'ALL' ? 'PROJEK TERTUNDA (ON PROGRESS)' : `PROJEK (${dashFilterStatus})`;
             
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
+            document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
             document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + statusCounts['NEW'] + statusCounts['NO DEAL']) : countFiltered;
+            
             document.getElementById('kpiTotalPending').innerText = dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered;
             
             let topClient = Object.keys(clients).sort((a,b) => clients[b] - clients[a])[0] || 'Belum Ada';
@@ -1280,7 +1294,7 @@
             // --- RENDER GRAFIK ---
             const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
             
-            // 1. Chart Klien (Doughnut) - REVISI 5: Tambah Persentase
+            // 1. Chart Klien (Doughnut)
             let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
             if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
             chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
@@ -1307,7 +1321,7 @@
                                 let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 if (sum === 0 || value === 0) return null;
                                 let pct = (value * 100 / sum);
-                                if (pct < 4) return null; // Sembunyikan persen jika irisan terlalu kecil
+                                if (pct < 4) return null; 
                                 return pct.toFixed(1) + "%";
                             }
                         }
@@ -1315,7 +1329,7 @@
                 }
             });
 
-            // 2. Chart Status (Bar) - REVISI 2: Tambah Persentase di dalam batang
+            // 2. Chart Status (Bar)
             let sortedStatusKeys = ['DEAL', 'ON PROGRESS', 'NEW', 'NO DEAL'];
             let sortedStatusData = sortedStatusKeys.map(k => statusCounts[k]);
             if(chartInstances['chartStatus']) chartInstances['chartStatus'].destroy();
@@ -1351,7 +1365,7 @@
                 }
             });
 
-            // 3. Chart Jenis Projek (Pie) - REVISI 3: Tambah Persentase
+            // 3. Chart Jenis Projek (Pie)
             if(chartInstances['chartJenis']) chartInstances['chartJenis'].destroy();
             chartInstances['chartJenis'] = new Chart(document.getElementById('chartJenis').getContext('2d'), {
                 type: 'pie',
@@ -1385,10 +1399,9 @@
                 }
             });
 
-            // 4. Chart Garis Forecasting / Gap Analysis - REVISI 4: Nama diganti & Garis Kuning hanya DEAL + ON PROGRESS
+            // 4. Chart Garis Forecasting / Gap Analysis
             let trendLabels = arrMonths; 
             
-            // AKTUAL: Hanya status DEAL
             let dataTrendDeal = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
@@ -1399,7 +1412,6 @@
                 return sum;
             });
             
-            // TOTAL POTENSI: Hanya DEAL + ON PROGRESS
             let dataTrendForecast = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
@@ -1414,7 +1426,6 @@
 
             if(chartInstances['chartTrend']) chartInstances['chartTrend'].destroy();
             
-            // Mengubah elemen h6 judul grafik garis sesuai revisi 4
             document.getElementById('chartTrend').parentElement.previousElementSibling.innerText = "Actual and Potential Revenue Sales Forces";
             
             chartInstances['chartTrend'] = new Chart(document.getElementById('chartTrend').getContext('2d'), {
@@ -1448,7 +1459,7 @@
                     maintainAspectRatio: false, 
                     plugins: { 
                         legend: { position: 'bottom' },
-                        datalabels: { display: false }, // Mematikan plugin datalabels khusus untuk grafik garis agar tidak berantakan
+                        datalabels: { display: false }, 
                         tooltip: {
                             callbacks: {
                                 afterLabel: function(context) {
