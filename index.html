@@ -345,11 +345,11 @@
             transform: rotate(-15deg); 
         }
 
-        /* --- TATA LETAK BARU: PERBAIKAN FULLSCREEN CSS (Anti Rusak/Tumpang Tindih) --- */
+        /* --- TATA LETAK BARU: FULLSCREEN CSS --- */
         #view-dashboard:fullscreen {
             background-color: var(--primary-bg);
             padding: 15px 20px;
-            overflow: hidden !important; 
+            overflow-y: auto !important; 
             display: flex;
             flex-direction: column;
             height: 100vh !important;
@@ -389,7 +389,6 @@
             padding: 0 !important;
         }
         
-        /* Memaksa batas proporsional antar baris di kiri */
         #view-dashboard:fullscreen .fs-kpi-row {
             margin: 0 !important;
             flex: 0 0 auto;
@@ -412,7 +411,6 @@
             width: 50% !important;
         }
         
-        /* Modifikasi Card agar seragam di Fullscreen */
         #view-dashboard:fullscreen .card-custom {
             height: 100%;
             margin-bottom: 0 !important;
@@ -441,7 +439,6 @@
             overflow-wrap: break-word;
         }
         
-        /* Rahasia utama agar Chart.js tidak "meledak" */
         #view-dashboard:fullscreen .chart-container {
             flex: 1 1 0 !important; 
             min-height: 0 !important;
@@ -569,7 +566,7 @@
                         </div>
                     </div>
 
-                    <!-- Header & Filter (Selalu tampil meski Fullscreen) -->
+                    <!-- Header & Filter -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                         <h5 class="mb-0 fw-bold">Key Performance Indicators</h5>
                         <div class="d-flex gap-2 align-items-center">
@@ -593,7 +590,6 @@
                         <div class="col-xl-7 col-lg-12 col-left">
                             
                             <!-- 3 KPI Cards -->
-                            <!-- Menggunakan class khusus pembantu grid fullscreen -->
                             <div class="row g-3 fs-kpi-row">
                                 <div class="col-md-4">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning">
@@ -619,7 +615,7 @@
                             </div>
 
                             <!-- 2 Grafik Sejajar (Status & Jenis) -->
-                            <div class="row g-3 fs-chart-row">
+                            <div class="row g-3 fs-chart-row mt-3">
                                 <div class="col-md-6">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
                                         <h6 class="fw-bold mb-3 text-dark text-center">Perbandingan Status</h6>
@@ -649,7 +645,7 @@
                         <!-- ================= KOLOM KANAN ================= -->
                         <div class="col-xl-5 col-lg-12 col-right d-flex flex-column gap-3">
                             
-                            <!-- Diagram Garis Forecasting / Gap Analysis -->
+                            <!-- Diagram Garis GAP Analysis & Pencapaian -->
                             <div class="card-custom mb-0 d-flex flex-column">
                                 <h6 class="fw-bold mb-3 text-dark text-center">Analisis Gap & Pencapaian Revenue (Per Bulan)</h6>
                                 <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
@@ -967,7 +963,7 @@
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'COBA LAGI <i class="fas fa-redo ms-2"></i>';
                 }
-                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau status Apps Script (Pastikan sudah dideploy ke publik).', 'error');
+                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau status Apps Script.', 'error');
             }
         }
 
@@ -1324,12 +1320,13 @@
                 return sum;
             });
             
-            // POTENSI: ON PROGRESS & NEW
+            // POTENSI TOTAL: Semua status DEAL + ON PROGRESS + NEW
             let dataTrendForecast = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
                     let st = String(r['STATUS']||'').toUpperCase().trim();
-                    if((r['MONTH']||'-') === m && st !== 'DEAL' && st !== 'NO DEAL') {
+                    if(st === 'PENDING') st = 'ON PROGRESS';
+                    if((r['MONTH']||'-') === m && (st === 'DEAL' || st === 'ON PROGRESS' || st === 'NEW')) {
                         sum += parseAmount(r['amount']||r['Nilai']); 
                     }
                 });
@@ -1352,7 +1349,7 @@
                             borderWidth: 3 
                         },
                         { 
-                            label: 'Potensi (IN PROGRESS / NEW)', 
+                            label: 'Total Potensi (DEAL + IN PROGRESS + NEW)', 
                             data: dataTrendForecast, 
                             borderColor: '#f59e0b', 
                             backgroundColor: 'rgba(245, 158, 11, 0.1)', 
@@ -1373,10 +1370,9 @@
                                 afterLabel: function(context) {
                                     let idx = context.dataIndex;
                                     let dealVal = dataTrendDeal[idx] || 0;
-                                    let potVal = dataTrendForecast[idx] || 0;
-                                    let total = dealVal + potVal;
-                                    if(total === 0) return 'Pencapaian: 0%';
-                                    let pct = ((dealVal / total) * 100).toFixed(1);
+                                    let totalPotensi = dataTrendForecast[idx] || 0;
+                                    if(totalPotensi === 0) return 'Pencapaian: 0%';
+                                    let pct = ((dealVal / totalPotensi) * 100).toFixed(1);
                                     return `Pencapaian (Win Rate): ${pct}% dari total potensi`;
                                 }
                             }
