@@ -349,7 +349,7 @@
             transform: rotate(-15deg); 
         }
 
-        /* --- CSS MODAL (REVISI BLUR & TATA LETAK) --- */
+        /* --- CSS MODAL (BLUR & TATA LETAK) --- */
         .modal-backdrop {
             backdrop-filter: blur(6px) !important;
             background-color: rgba(15, 23, 42, 0.5) !important;
@@ -391,8 +391,7 @@
             color: #1e293b;
         }
 
-        /* --- TATA LETAK BARU: FULLSCREEN CSS --- */
-        /* REVISI 4: Pindah fullscreen ke documentElement agar Popup terlihat jelas */
+        /* --- TATA LETAK BARU: PERBAIKAN FULLSCREEN CSS (Anti Rusak/Tumpang Tindih & Kanan Kosong) --- */
         :fullscreen .sidebar { display: none !important; }
         :fullscreen .topbar { display: none !important; }
         :fullscreen .main-content { width: 100% !important; margin: 0 !important; flex: 1; }
@@ -422,9 +421,10 @@
             gap: 15px;
         }
 
+        /* REVISI 2: Menggunakan Flex Grow proporsional agar Sisi Kanan terisi penuh */
         :fullscreen #view-dashboard .col-left {
-            width: 60% !important;
-            flex: none !important;
+            flex: 1.4 !important; /* Proporsi Kiri 1.4 */
+            width: auto !important;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -432,8 +432,8 @@
         }
 
         :fullscreen #view-dashboard .col-right {
-            width: 40% !important;
-            flex: none !important;
+            flex: 1 !important; /* Proporsi Kanan 1 */
+            width: auto !important;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -604,7 +604,7 @@
 
             <div class="content-body">
                 
-                <!-- VIEW: DASHBOARD (TATA LETAK BARU) -->
+                <!-- VIEW: DASHBOARD -->
                 <div id="view-dashboard" class="view-section active fade-in">
                     
                     <!-- Communicative Banner -->
@@ -916,7 +916,7 @@
 
     <!-- MODALS SECTION -->
     
-    <!-- REVISI 1 & 2: Modal List Cancel dengan Backdrop Blur -->
+    <!-- Modal List Cancel -->
     <div class="modal fade" id="modalCancelList" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content" style="border-radius: 1rem;">
@@ -946,7 +946,7 @@
         </div>
     </div>
 
-    <!-- REVISI 3: Modal Detail Cancel (Desain Menyerupai Foto 2, Hapus Logo, Ganti No Projek) -->
+    <!-- Modal Detail Cancel -->
     <div class="modal fade" id="modalCancelDetail" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content det-modal-content">
@@ -1275,7 +1275,6 @@
             }, 350);
         }
 
-        // REVISI 4: Pindah fullscreen ke documentElement agar Popup terlihat dengan benar
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => console.log(`Error fullscreen: ${err.message}`));
@@ -1684,74 +1683,80 @@
         let cancelListModalInst;
         let cancelDetailModalInst;
 
+        // REVISI 1: Logika perbaikan double pop up dengan setTimeout
         function openCancelListModal(reason) {
-            const data = getDB(DB_KEY_SALES);
-            const dashFilterBulan = document.getElementById('dashFilterBulan').value;
+            if(cancelDetailModalInst) cancelDetailModalInst.hide();
             
-            document.getElementById('titleCancelList').innerText = `Daftar Projek Cancel: ${reason}`;
-
-            let filtered = data.filter(row => {
-                let status = String(row['STATUS'] || '').toUpperCase().trim();
-                let bulan = String(row['MONTH'] || '-').toUpperCase().trim();
-                let ketRaw = row['Keterangan'] || row['keterangan'] || '';
-                let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
+            setTimeout(() => {
+                const data = getDB(DB_KEY_SALES);
+                const dashFilterBulan = document.getElementById('dashFilterBulan').value;
                 
-                if(isPassedBulan && (status === 'CANCEL' || status === 'NO DEAL')) {
-                    return kategorikanCancel(ketRaw) === reason;
-                }
-                return false;
-            });
+                document.getElementById('titleCancelList').innerText = `Daftar Projek Cancel: ${reason}`;
 
-            let tbody = document.querySelector('#tblCancelList tbody');
-            let html = '';
-            if(filtered.length === 0) {
-                html = `<tr><td colspan="4" class="text-center py-4 text-muted">Tidak ada data.</td></tr>`;
-            } else {
-                filtered.forEach(f => {
-                    let jenis = f['Jenis'] || '-';
-                    let judul = f['Judul Projek'] || '-';
-                    let customer = f['Cust name'] || f['Customer'] || '-';
-                    let noProj = f['No. Projek'];
+                let filtered = data.filter(row => {
+                    let status = String(row['STATUS'] || '').toUpperCase().trim();
+                    let bulan = String(row['MONTH'] || '-').toUpperCase().trim();
+                    let ketRaw = row['Keterangan'] || row['keterangan'] || '';
+                    let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
                     
-                    html += `<tr>
-                        <td><span class="badge bg-secondary">${jenis}</span></td>
-                        <td class="fw-bold text-dark text-truncate" style="max-width:200px;" title="${judul}">${judul}</td>
-                        <td>${customer}</td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-dark fw-bold" onclick="openCancelDetailModal('${noProj}')">See More <i class="fas fa-arrow-right ms-1"></i></button>
-                        </td>
-                    </tr>`;
+                    if(isPassedBulan && (status === 'CANCEL' || status === 'NO DEAL')) {
+                        return kategorikanCancel(ketRaw) === reason;
+                    }
+                    return false;
                 });
-            }
-            tbody.innerHTML = html;
 
-            if(!cancelListModalInst) cancelListModalInst = new bootstrap.Modal(document.getElementById('modalCancelList'));
-            cancelListModalInst.show();
+                let tbody = document.querySelector('#tblCancelList tbody');
+                let html = '';
+                if(filtered.length === 0) {
+                    html = `<tr><td colspan="4" class="text-center py-4 text-muted">Tidak ada data.</td></tr>`;
+                } else {
+                    filtered.forEach(f => {
+                        let jenis = f['Jenis'] || '-';
+                        let judul = f['Judul Projek'] || '-';
+                        let customer = f['Cust name'] || f['Customer'] || '-';
+                        let noProj = f['No. Projek'];
+                        
+                        html += `<tr>
+                            <td><span class="badge bg-secondary">${jenis}</span></td>
+                            <td class="fw-bold text-dark text-truncate" style="max-width:200px;" title="${judul}">${judul}</td>
+                            <td>${customer}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-dark fw-bold" onclick="openCancelDetailModal('${noProj}')">See More <i class="fas fa-arrow-right ms-1"></i></button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+                tbody.innerHTML = html;
+
+                if(!cancelListModalInst) cancelListModalInst = new bootstrap.Modal(document.getElementById('modalCancelList'));
+                cancelListModalInst.show();
+            }, 300); // Penambahan jeda agar modal sebelumnya benar-benar tertutup
         }
 
         // FUNGSI BARU UNTUK POPUP DETAIL CANCEL
         function openCancelDetailModal(noProjek) {
             if(cancelListModalInst) cancelListModalInst.hide();
 
-            const data = getDB(DB_KEY_SALES);
-            const p = data.find(x => String(x['No. Projek']) === String(noProjek));
-            if(!p) return;
+            setTimeout(() => {
+                const data = getDB(DB_KEY_SALES);
+                const p = data.find(x => String(x['No. Projek']) === String(noProjek));
+                if(!p) return;
 
-            let customerName = p['Cust name'] || p['Customer'] || '-';
-            let nilai = formatRp(parseAmount(p['amount'] || p['Nilai']));
-            let ketDetail = p['Keterangan'] || p['keterangan'] || '-';
-            if(ketDetail.trim() === '') ketDetail = '-';
+                let customerName = p['Cust name'] || p['Customer'] || '-';
+                let nilai = formatRp(parseAmount(p['amount'] || p['Nilai']));
+                let ketDetail = p['Keterangan'] || p['keterangan'] || '-';
+                if(ketDetail.trim() === '') ketDetail = '-';
 
-            // REVISI 3: Merubah desain HTML Detail agar sesuai Image 2
-            document.getElementById('detCancelJudul').innerText = p['Judul Projek'] || '-';
-            document.getElementById('detCancelNo').innerText = "No. Projek : " + (p['No. Projek'] || '-');
-            document.getElementById('detCancelCustomer').innerText = customerName;
-            document.getElementById('detCancelJenis').innerText = p['Jenis'] || '-';
-            document.getElementById('detCancelNilai').innerText = nilai;
-            document.getElementById('detCancelKeterangan').innerText = ketDetail;
+                document.getElementById('detCancelJudul').innerText = p['Judul Projek'] || '-';
+                document.getElementById('detCancelNo').innerText = "No. Projek : " + (p['No. Projek'] || '-');
+                document.getElementById('detCancelCustomer').innerText = customerName;
+                document.getElementById('detCancelJenis').innerText = p['Jenis'] || '-';
+                document.getElementById('detCancelNilai').innerText = nilai;
+                document.getElementById('detCancelKeterangan').innerText = ketDetail;
 
-            if(!cancelDetailModalInst) cancelDetailModalInst = new bootstrap.Modal(document.getElementById('modalCancelDetail'));
-            cancelDetailModalInst.show();
+                if(!cancelDetailModalInst) cancelDetailModalInst = new bootstrap.Modal(document.getElementById('modalCancelDetail'));
+                cancelDetailModalInst.show();
+            }, 300);
         }
 
         function initAndPlotMap(cityCounts, cityRealNames) {
