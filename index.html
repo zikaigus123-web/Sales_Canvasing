@@ -474,6 +474,76 @@
             padding: 4px 8px;
             font-size: 0.75rem;
         }
+
+        /* CUSTOM MODAL DETAIL STYLING (Berdasarkan Referensi Gambar) */
+        .det-modal-content {
+            border-radius: 20px;
+            border: none;
+            padding: 30px;
+            background: #ffffff;
+        }
+        .det-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+        .det-initial-box {
+            width: 55px; 
+            height: 55px; 
+            background: #1A1A1A; 
+            color: #FFC000; 
+            border-radius: 50%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            flex-shrink: 0;
+        }
+        .det-card {
+            border: 1px solid #E2E8F0; 
+            border-radius: 12px; 
+            padding: 15px; 
+            background: #fafafa; 
+            height: 100%;
+        }
+        .det-label {
+            display: block; 
+            font-size: 0.7rem; 
+            font-weight: 700; 
+            color: #718096; 
+            letter-spacing: 0.5px; 
+            text-transform: uppercase; 
+            margin-bottom: 4px;
+        }
+        .det-value {
+            font-size: 0.95rem; 
+            font-weight: 700; 
+            color: #2D3748;
+        }
+        .det-ket-box {
+            border: 1px solid #fca5a5; 
+            background: #fef2f2; 
+            border-radius: 12px; 
+            padding: 20px;
+        }
+        .det-ket-label {
+            display: block; 
+            font-size: 0.75rem; 
+            font-weight: 800; 
+            color: #b91c1c; 
+            letter-spacing: 0.5px; 
+            text-transform: uppercase; 
+            margin-bottom: 8px;
+        }
+        .det-ket-text {
+            font-size: 0.95rem; 
+            color: #7f1d1d; 
+            margin: 0; 
+            font-weight: 500;
+            white-space: pre-wrap; /* Preserve newlines */
+        }
     </style>
 </head>
 <body>
@@ -867,6 +937,92 @@
         </div>
     </div>
 
+    <!-- MODALS SECTION -->
+    
+    <!-- Modal List Cancel (FITUR BARU) -->
+    <div class="modal fade" id="modalCancelList" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: 1rem;">
+                <div class="modal-header bg-dark text-white border-bottom border-4 border-danger">
+                    <h5 class="modal-title fw-bold" id="titleCancelList">Daftar Projek Cancel</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-custom align-middle mb-0" id="tblCancelList">
+                            <thead>
+                                <tr>
+                                    <th>Jenis</th>
+                                    <th>Judul Projek</th>
+                                    <th>Customer</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail Cancel (FITUR BARU) -->
+    <div class="modal fade" id="modalCancelDetail" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content det-modal-content">
+                <div class="det-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div id="detCancelInitial" class="det-initial-box">C</div>
+                        <div>
+                            <h3 id="detCancelJudul" style="font-size: 1.2rem; font-weight: 800; color: #2D3748; margin-bottom: 2px;">Judul</h3>
+                            <p id="detCancelNo" style="font-size: 0.85rem; color: #718096; font-family: monospace; font-weight: 600; margin: 0;">NO PROJ</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="padding: 5px;"></button>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="det-card">
+                            <div>
+                                <label class="det-label">Customer</label>
+                                <span id="detCancelCustomer" class="det-value">PT ABC</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="det-card">
+                            <div>
+                                <label class="det-label">Jenis Projek</label>
+                                <span id="detCancelJenis" class="det-value">Jenis</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="det-card">
+                            <label class="det-label">Nilai / Amount</label>
+                            <span id="detCancelNilai" style="font-size: 1.2rem; font-weight: 800; color: #1A1A1A;">Rp 0</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="det-ket-box">
+                            <label class="det-ket-label">Keterangan Detail Cancel</label>
+                            <p id="detCancelKeterangan" class="det-ket-text">Alasan lengkap...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4 pt-3" style="border-top: 1px solid #E2E8F0;">
+                    <!-- Tombol kembali ini akan membuka kembali modal list sebelumnya -->
+                    <button type="button" class="btn btn-outline-dark fw-bold px-4" onclick="openCancelListModal(document.getElementById('titleCancelList').innerText.replace('Daftar Projek Cancel: ', ''))">Kembali</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Manajemen Akun -->
     <div class="modal fade" id="modalUser" tabindex="-1">
         <div class="modal-dialog">
@@ -966,9 +1122,8 @@
             return null;
         }
 
-        // FUNGSI BARU: KATEGORISASI ALASAN CANCEL
         function kategorikanCancel(ket) {
-            if(!ket) return 'Tanpa Keterangan';
+            if(!ket || String(ket).trim() === '') return 'Tanpa Keterangan';
             let lowerKet = String(ket).toLowerCase();
             
             if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Perubahan Harga';
@@ -1212,7 +1367,7 @@
             // Variabel Penampung Grafik
             let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0 };
             let jenisCounts = {};
-            let cancelCounts = {};
+            let cancelCounts = {}; 
             
             let cityCountsMap = {}; 
             let cityRealNamesMap = {}; 
@@ -1220,7 +1375,6 @@
             data.forEach(row => {
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
                 
-                // Normalisasi PENDING menjadi ON PROGRESS
                 if(status === 'PENDING') {
                     status = 'ON PROGRESS'; 
                 }
@@ -1234,7 +1388,6 @@
                 let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
-                // Hitung chart status (Berdasarkan filter bulan agar sinkron)
                 if(isPassedBulan) {
                     if(statusCounts[status] !== undefined) statusCounts[status]++;
                     if (status === 'ON PROGRESS') countInProgressOverall++;
@@ -1247,7 +1400,6 @@
                     }
                 }
 
-                // Logika Filter untuk KPI, Map, dan Matrix
                 if (isPassedStatus && isPassedBulan) {
                     countFiltered++; 
                     totalAmountFiltered += amt;
@@ -1280,7 +1432,6 @@
                 }
             });
 
-            // Update Label KPI Dinamis
             let filterTextName = dashFilterStatus === 'ALL' ? 'DEAL' : dashFilterStatus;
             document.getElementById('kpiTitleRev').innerText = dashFilterStatus === 'ALL' ? 'TOTAL PROJECT AMOUNT (DEAL)' : `TOTAL PROJECT AMOUNT (${dashFilterStatus})`;
             document.getElementById('kpiTitleTotalAmount').innerText = dashFilterStatus === 'ALL' ? 'TOTAL PROJECT AMOUNT (ALL)' : `TOTAL PROJECT AMOUNT (${dashFilterStatus})`;
@@ -1289,7 +1440,7 @@
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
             document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
-            document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + statusCounts['NEW'] + statusCounts['NO DEAL']) : countFiltered;
+            document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
             
             document.getElementById('kpiTotalPending').innerText = dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered;
             
@@ -1298,17 +1449,15 @@
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
             
             let textBulanBanner = dashFilterBulan === 'ALL' ? '' : ` di bulan ${dashFilterBulan}`;
-            let jumlahTeksBanner = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + statusCounts['NEW'] + statusCounts['NO DEAL']) : countFiltered;
+            let jumlahTeksBanner = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
             
             document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${jumlahTeksBanner} data projek terdaftar</strong>${textBulanBanner} dengan total <em>revenue</em> ${filterTextName} mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
 
-            // URUTAN BULAN KALENDER (Bukan Abjad)
             const monthOrder = { "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4, "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8, "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12 };
             let arrMonths = Array.from(monthsSet).sort((a, b) => {
                 return (monthOrder[a] || 99) - (monthOrder[b] || 99);
             });
 
-            // Matriks Table
             let thMonths = arrMonths.map(m => `<th>${m}</th>`).join('');
             let htmlMatriks = `<thead class="table-dark"><tr><th class="text-start">Jenis Projek</th>${thMonths}<th>Total</th></tr></thead><tbody>`;
             
@@ -1327,7 +1476,6 @@
             // --- RENDER GRAFIK ---
             const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
             
-            // 1. Chart Klien (Doughnut)
             let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
             if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
             chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
@@ -1362,7 +1510,6 @@
                 }
             });
 
-            // 2. Chart Status (Bar)
             let sortedStatusKeys = ['DEAL', 'ON PROGRESS', 'NEW', 'NO DEAL'];
             let sortedStatusData = sortedStatusKeys.map(k => statusCounts[k]);
             if(chartInstances['chartStatus']) chartInstances['chartStatus'].destroy();
@@ -1398,7 +1545,6 @@
                 }
             });
 
-            // 3. Chart Jenis Projek (Pie)
             if(chartInstances['chartJenis']) chartInstances['chartJenis'].destroy();
             chartInstances['chartJenis'] = new Chart(document.getElementById('chartJenis').getContext('2d'), {
                 type: 'pie',
@@ -1432,7 +1578,7 @@
                 }
             });
 
-            // 3.5 Chart Distribusi Cancel (Pie)
+            // FITUR BARU: Chart Distribusi Cancel (Pie) bisa diklik
             let sortedCancelKeys = Object.keys(cancelCounts).sort((a,b) => cancelCounts[b] - cancelCounts[a]).slice(0, 5);
             let sortedCancelData = sortedCancelKeys.map(k => cancelCounts[k]);
             
@@ -1451,7 +1597,13 @@
                     responsive: true, 
                     maintainAspectRatio: false, 
                     plugins: { 
-                        legend: { position: 'bottom' },
+                        legend: { 
+                            position: 'bottom',
+                            onClick: function(e, legendItem, legend) {
+                                // Mencegah coret default, malah buka pop up
+                                openCancelListModal(legendItem.text);
+                            }
+                        },
                         datalabels: {
                             color: '#fff',
                             font: { weight: 'bold', size: 10 },
@@ -1465,11 +1617,20 @@
                                 return pct.toFixed(1) + "%";
                             }
                         }
-                    } 
+                    },
+                    onClick: function(event, elements, chart) {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const label = chart.data.labels[index];
+                            openCancelListModal(label);
+                        }
+                    },
+                    onHover: (event, chartElement) => {
+                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                    }
                 }
             });
 
-            // 4. Chart Garis Forecasting / Gap Analysis
             let trendLabels = arrMonths; 
             
             let dataTrendDeal = trendLabels.map(m => {
@@ -1547,8 +1708,82 @@
                 }
             });
 
-            // --- RENDER PETA LOKASI ---
             initAndPlotMap(cityCountsMap, cityRealNamesMap);
+        }
+
+        // FUNGSI BARU UNTUK POPUP LIST CANCEL
+        let cancelListModalInst;
+        let cancelDetailModalInst;
+
+        function openCancelListModal(reason) {
+            const data = getDB(DB_KEY_SALES);
+            const dashFilterBulan = document.getElementById('dashFilterBulan').value;
+            
+            document.getElementById('titleCancelList').innerText = `Daftar Projek Cancel: ${reason}`;
+
+            let filtered = data.filter(row => {
+                let status = String(row['STATUS'] || '').toUpperCase().trim();
+                let bulan = String(row['MONTH'] || '-').toUpperCase().trim();
+                let ketRaw = row['Keterangan'] || row['keterangan'] || '';
+                let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
+                
+                if(isPassedBulan && (status === 'CANCEL' || status === 'NO DEAL')) {
+                    return kategorikanCancel(ketRaw) === reason;
+                }
+                return false;
+            });
+
+            let tbody = document.querySelector('#tblCancelList tbody');
+            let html = '';
+            if(filtered.length === 0) {
+                html = `<tr><td colspan="4" class="text-center py-4 text-muted">Tidak ada data.</td></tr>`;
+            } else {
+                filtered.forEach(f => {
+                    let jenis = f['Jenis'] || '-';
+                    let judul = f['Judul Projek'] || '-';
+                    let customer = f['Cust name'] || f['Customer'] || '-';
+                    let noProj = f['No. Projek'];
+                    
+                    html += `<tr>
+                        <td><span class="badge bg-secondary">${jenis}</span></td>
+                        <td class="fw-bold text-dark text-truncate" style="max-width:200px;" title="${judul}">${judul}</td>
+                        <td>${customer}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-dark fw-bold" onclick="openCancelDetailModal('${noProj}')">See More <i class="fas fa-arrow-right ms-1"></i></button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            tbody.innerHTML = html;
+
+            if(!cancelListModalInst) cancelListModalInst = new bootstrap.Modal(document.getElementById('modalCancelList'));
+            cancelListModalInst.show();
+        }
+
+        // FUNGSI BARU UNTUK POPUP DETAIL CANCEL
+        function openCancelDetailModal(noProjek) {
+            if(cancelListModalInst) cancelListModalInst.hide();
+
+            const data = getDB(DB_KEY_SALES);
+            const p = data.find(x => String(x['No. Projek']) === String(noProjek));
+            if(!p) return;
+
+            let customerName = p['Cust name'] || p['Customer'] || '-';
+            let initial = customerName !== '-' ? customerName.charAt(0).toUpperCase() : '?';
+            let nilai = formatRp(parseAmount(p['amount'] || p['Nilai']));
+            let ketDetail = p['Keterangan'] || p['keterangan'] || '-';
+            if(ketDetail.trim() === '') ketDetail = '-';
+
+            document.getElementById('detCancelInitial').innerText = initial;
+            document.getElementById('detCancelJudul').innerText = p['Judul Projek'] || '-';
+            document.getElementById('detCancelNo').innerText = p['No. Projek'] || '-';
+            document.getElementById('detCancelCustomer').innerText = customerName;
+            document.getElementById('detCancelJenis').innerText = p['Jenis'] || '-';
+            document.getElementById('detCancelNilai').innerText = nilai;
+            document.getElementById('detCancelKeterangan').innerText = ketDetail;
+
+            if(!cancelDetailModalInst) cancelDetailModalInst = new bootstrap.Modal(document.getElementById('modalCancelDetail'));
+            cancelDetailModalInst.show();
         }
 
         function initAndPlotMap(cityCounts, cityRealNames) {
@@ -1650,7 +1885,7 @@
             tbody.innerHTML = html || `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
         }
 
-        // --- MANAJEMEN EXCEL IMPORT / EXPORT (KOLOM LENGKAP & DINAMIS) ---
+        // --- MANAJEMEN EXCEL IMPORT / EXPORT ---
         function parseExcelDate(serial) { 
             if (typeof serial === 'number') return new Date((Math.floor(serial - 25569) * 86400) * 1000).toISOString().split('T')[0]; 
             if (typeof serial === 'string') { let d = new Date(serial); if(!isNaN(d.getTime())) return d.toISOString().split('T')[0]; } return serial; 
