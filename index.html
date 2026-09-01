@@ -407,12 +407,13 @@
             min-height: 0;
         }
         
-        #view-dashboard:fullscreen .fs-chart-row > .col-md-6 {
+        /* PEMBARUAN FULLSCREEN: Mengakomodasi 3 Grafik (col-md-4) */
+        #view-dashboard:fullscreen .fs-chart-row > .col-md-4 {
             flex: 1;
             padding: 0;
             display: flex;
             flex-direction: column;
-            width: 50% !important;
+            width: 33.33% !important;
         }
         
         #view-dashboard:fullscreen .card-custom {
@@ -557,7 +558,7 @@
 
             <div class="content-body">
                 
-                <!-- VIEW: DASHBOARD (TATA LETAK BARU) -->
+                <!-- VIEW: DASHBOARD -->
                 <div id="view-dashboard" class="view-section active fade-in">
                     
                     <!-- Communicative Banner -->
@@ -611,7 +612,7 @@
                         <!-- ================= KOLOM KIRI ================= -->
                         <div class="col-xl-7 col-lg-12 col-left">
                             
-                            <!-- 4 KPI Cards (Disesuaikan dengan penambahan Total Project Amount) -->
+                            <!-- 4 KPI Cards -->
                             <div class="row g-3 fs-kpi-row">
                                 <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning">
@@ -622,7 +623,6 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-info">
-                                        <!-- FITUR BARU: Total Project Amount Keseluruhan -->
                                         <div class="kpi-title" id="kpiTitleTotalAmount">TOTAL PROJECT AMOUNT (ALL)</div>
                                         <div class="kpi-value text-info" id="kpiTotalAmount">Rp 0</div>
                                         <div class="small text-muted mt-2 fw-bold"><i class="fas fa-coins text-primary me-1"></i> Keseluruhan (Filtered)</div>
@@ -644,9 +644,9 @@
                                 </div>
                             </div>
 
-                            <!-- 2 Grafik Sejajar (Status & Jenis) -->
+                            <!-- 3 Grafik Sejajar (Status, Jenis, Cancel) -->
                             <div class="row g-3 fs-chart-row mt-3">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
                                         <h6 class="fw-bold mb-3 text-dark text-center">Perbandingan Status</h6>
                                         <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
@@ -654,11 +654,20 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
                                         <h6 class="fw-bold mb-3 text-dark text-center">Komposisi Jenis Projek</h6>
                                         <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                             <canvas id="chartJenis"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- FITUR BARU: Diagram Cancel / Distribusi Alasan Cancel -->
+                                <div class="col-md-4">
+                                    <div class="card-custom h-100 mb-0 d-flex flex-column">
+                                        <h6 class="fw-bold mb-3 text-dark text-center">Distribusi Alasan Cancel</h6>
+                                        <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
+                                            <canvas id="chartCancel"></canvas>
                                         </div>
                                     </div>
                                 </div>
@@ -677,7 +686,7 @@
                             
                             <!-- Diagram Garis Forecasting / Gap Analysis -->
                             <div class="card-custom mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark text-center">Actual and Potential Revenue Sales Forces</h6>
+                                <h6 class="fw-bold mb-3 text-dark text-center">Analisis Gap & Pencapaian Revenue (Per Bulan)</h6>
                                 <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                     <canvas id="chartTrend"></canvas>
                                 </div>
@@ -756,6 +765,7 @@
                                     <option value="ON PROGRESS">Hanya ON PROGRESS</option>
                                     <option value="NEW">Hanya NEW</option>
                                     <option value="NO DEAL">Hanya NO DEAL</option>
+                                    <option value="CANCEL">Hanya CANCEL</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -957,6 +967,23 @@
                 }
             }
             return null;
+        }
+
+        // --- FUNGSI BARU: KATEGORISASI ALASAN CANCEL ---
+        function kategorikanCancel(ket) {
+            if(!ket) return 'Tanpa Keterangan';
+            let lowerKet = String(ket).toLowerCase();
+            
+            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Perubahan Harga';
+            if(lowerKet.includes('revisi')) return 'Revisi';
+            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Gunakan Quotation Lama';
+            if(lowerKet.includes('gabung') || lowerKet.includes('bersama') || lowerKet.includes('dijadikan 1')) return 'Digabung Event Lain';
+            if(lowerKet.includes('event') || lowerKet.includes('paket')) return 'Perubahan Paket Pelatihan';
+            if(lowerKet.includes('double')) return 'Double Input';
+            if(lowerKet.includes('perubahan nama') || lowerKet.includes('company') || lowerKet.includes('pt') || lowerKet.includes('customer')) return 'Perubahan Data Customer';
+            if(lowerKet.includes('jadwal')) return 'Perubahan Jadwal';
+            
+            return 'Alasan Lainnya';
         }
 
         // 2. INISIALISASI DATABASE & CACHING
@@ -1186,8 +1213,10 @@
             let monthsSet = new Set();
             
             // Variabel Penampung Grafik
-            let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0 };
+            let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0, 'CANCEL':0 };
             let jenisCounts = {};
+            let cancelCounts = {}; // FITUR BARU: Penampung Distribusi Cancel
+            
             let cityCountsMap = {}; 
             let cityRealNamesMap = {}; 
 
@@ -1212,6 +1241,14 @@
                 if(isPassedBulan) {
                     if(statusCounts[status] !== undefined) statusCounts[status]++;
                     if (status === 'ON PROGRESS') countInProgressOverall++;
+                    
+                    // FITUR BARU: Mengumpulkan Data Cancel
+                    if (status === 'CANCEL' || status === 'NO DEAL') {
+                        let keteranganRaw = row['Keterangan'] || row['keterangan'] || '';
+                        let alasanKategori = kategorikanCancel(keteranganRaw);
+                        if(!cancelCounts[alasanKategori]) cancelCounts[alasanKategori] = 0;
+                        cancelCounts[alasanKategori]++;
+                    }
                 }
 
                 // Logika Filter untuk KPI, Map, dan Matrix
@@ -1256,7 +1293,7 @@
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
             document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
-            document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + statusCounts['NEW'] + statusCounts['NO DEAL']) : countFiltered;
+            document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + statusCounts['NEW'] + statusCounts['NO DEAL'] + statusCounts['CANCEL']) : countFiltered;
             
             document.getElementById('kpiTotalPending').innerText = dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered;
             
@@ -1265,7 +1302,7 @@
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
             
             let textBulanBanner = dashFilterBulan === 'ALL' ? '' : ` di bulan ${dashFilterBulan}`;
-            let jumlahTeksBanner = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + statusCounts['NEW'] + statusCounts['NO DEAL']) : countFiltered;
+            let jumlahTeksBanner = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + statusCounts['NEW'] + statusCounts['NO DEAL'] + statusCounts['CANCEL']) : countFiltered;
             
             document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${jumlahTeksBanner} data projek terdaftar</strong>${textBulanBanner} dengan total <em>revenue</em> ${filterTextName} mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
 
@@ -1399,25 +1436,66 @@
                 }
             });
 
+            // FITUR BARU: 3.5 Chart Distribusi Cancel (Pie)
+            let sortedCancelKeys = Object.keys(cancelCounts).sort((a,b) => cancelCounts[b] - cancelCounts[a]).slice(0, 5);
+            let sortedCancelData = sortedCancelKeys.map(k => cancelCounts[k]);
+            
+            if(chartInstances['chartCancel']) chartInstances['chartCancel'].destroy();
+            chartInstances['chartCancel'] = new Chart(document.getElementById('chartCancel').getContext('2d'), {
+                type: 'pie',
+                data: { 
+                    labels: sortedCancelKeys, 
+                    datasets: [{ 
+                        data: sortedCancelData, 
+                        backgroundColor: ['#ef4444', '#f97316', '#8b5cf6', '#64748b', '#cbd5e1'], 
+                        borderWidth: 0 
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { position: 'bottom' },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 10 },
+                            textStrokeColor: '#1A1A1A',
+                            textStrokeWidth: 2,
+                            formatter: (value, ctx) => {
+                                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                if (sum === 0 || value === 0) return null;
+                                let pct = (value * 100 / sum);
+                                if (pct < 4) return null;
+                                return pct.toFixed(1) + "%";
+                            }
+                        }
+                    } 
+                }
+            });
+
             // 4. Chart Garis Forecasting / Gap Analysis
             let trendLabels = arrMonths; 
             
+            // AKTUAL: Hanya status DEAL
             let dataTrendDeal = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
-                    if((r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
+                    let b = String(r['MONTH']||'-').toUpperCase().trim();
+                    if(b === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
                         sum += parseAmount(r['amount']||r['Nilai']); 
                     }
                 });
                 return sum;
             });
             
+            // POTENSI TOTAL: Hanya DEAL + ON PROGRESS
             let dataTrendForecast = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
+                    let b = String(r['MONTH']||'-').toUpperCase().trim();
                     let st = String(r['STATUS']||'').toUpperCase().trim();
                     if(st === 'PENDING') st = 'ON PROGRESS';
-                    if((r['MONTH']||'-') === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
+                    if(b === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
                         sum += parseAmount(r['amount']||r['Nilai']); 
                     }
                 });
@@ -1425,8 +1503,6 @@
             });
 
             if(chartInstances['chartTrend']) chartInstances['chartTrend'].destroy();
-            
-            document.getElementById('chartTrend').parentElement.previousElementSibling.innerText = "Actual and Potential Revenue Sales Forces";
             
             chartInstances['chartTrend'] = new Chart(document.getElementById('chartTrend').getContext('2d'), {
                 type: 'line',
@@ -1633,6 +1709,7 @@
                        rowData['Nilai'] = row['Nilai'] || row['amount'] || 0;
                        rowData['Status'] = row['Status'] || '';
                        rowData['STATUS'] = row['STATUS'] || 'ON PROGRESS';
+                       rowData['Keterangan'] = row['Keterangan'] || ''; // Ekstrak kolom Keterangan untuk Chart Cancel
                        rowData['lastUpdatedBy'] = currentUser.username;
                        rowData['lastUpdatedAt'] = new Date().toISOString();
 
