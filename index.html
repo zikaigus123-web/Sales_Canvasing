@@ -677,14 +677,14 @@
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-dark">
                                         <div class="kpi-title">TOTAL PROJEK (FILTERED)</div>
                                         <div class="kpi-value" id="kpiTotalDeal">0</div>
-                                        <div class="small text-muted mt-2 fw-bold"><i class="fas fa-check-circle text-primary me-1"></i> </div>
+                                        <div class="small text-muted mt-2 fw-bold">Terdaftar di sistem</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
                                         <div class="kpi-title" id="kpiTitlePending">PROJEK TERTUNDA (ON PROGRESS)</div>
                                         <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
-                                        <div class="small text-muted mt-2 fw-bold"><i class="fas fa-clock text-primary me-1"></i> </div>
+                                        <div class="small text-muted mt-2 fw-bold">Keseluruhan Menunggu</div>
                                     </div>
                                 </div>
                             </div>
@@ -693,7 +693,7 @@
                             <div class="row g-3 fs-chart-row mt-3">
                                 <div class="col-md-4">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
-                                        <h6 class="fw-bold mb-3 text-dark text-center">Project Comparison By Status</h6>
+                                        <h6 class="fw-bold mb-3 text-dark text-center">Perbandingan Status</h6>
                                         <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                             <canvas id="chartStatus"></canvas>
                                         </div>
@@ -738,7 +738,7 @@
 
                             <!-- Distribusi Top Klien -->
                             <div class="card-custom mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark text-center">Top 5 Client</h6>
+                                <h6 class="fw-bold mb-3 text-dark text-center">Distribusi Top Klien (Nilai)</h6>
                                 <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                     <canvas id="chartClient"></canvas>
                                 </div>
@@ -746,7 +746,7 @@
 
                             <!-- Tabel Matriks -->
                             <div class="card-custom flex-grow-1 mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark">Kontribusi Layanan per Bulan</h6>
+                                <h6 class="fw-bold mb-3 text-dark">Matriks Jumlah Projek (Terfilter)</h6>
                                 <div class="table-responsive">
                                     <table class="table table-hover table-bordered text-center align-middle mb-0" id="tblMatriksDashboard">
                                     </table>
@@ -1096,14 +1096,14 @@
             if(!ket || String(ket).trim() === '') return 'Tanpa Keterangan';
             let lowerKet = String(ket).toLowerCase();
             
-            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Harga';
+            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Perubahan Harga';
             if(lowerKet.includes('revisi')) return 'Revisi';
-            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Requotation';
-            if(lowerKet.includes('gabung') || lowerKet.includes('bersama') || lowerKet.includes('dijadikan 1')) return 'Reschedule';
+            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Gunakan Quotation Lama';
+            if(lowerKet.includes('gabung') || lowerKet.includes('bersama') || lowerKet.includes('dijadikan 1')) return 'Digabung Event Lain';
             if(lowerKet.includes('event') || lowerKet.includes('paket')) return 'Perubahan Paket Pelatihan';
             if(lowerKet.includes('double')) return 'Double Input';
             if(lowerKet.includes('perubahan nama') || lowerKet.includes('company') || lowerKet.includes('pt') || lowerKet.includes('customer')) return 'Perubahan Data Customer';
-            if(lowerKet.includes('jadwal')) return 'Reschedule';
+            if(lowerKet.includes('jadwal')) return 'Perubahan Jadwal';
             
             return 'Alasan Lainnya';
         }
@@ -1333,7 +1333,6 @@
             let matrix = {}; 
             let monthsSet = new Set();
             
-            // Variabel Penampung Grafik
             let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0 };
             let jenisCounts = {};
             let cancelCounts = {}; 
@@ -1357,7 +1356,6 @@
                 let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
-                // Hitung chart status (Berdasarkan filter bulan agar sinkron)
                 if(isPassedBulan) {
                     if(statusCounts[status] !== undefined) statusCounts[status]++;
                     if (status === 'ON PROGRESS') countInProgressOverall++;
@@ -1370,7 +1368,6 @@
                     }
                 }
 
-                // Logika Filter untuk KPI, Map, dan Matrix
                 if (isPassedStatus && isPassedBulan) {
                     countFiltered++; 
                     totalAmountFiltered += amt;
@@ -1403,7 +1400,6 @@
                 }
             });
 
-            // Update Label KPI Dinamis
             let filterTextName = dashFilterStatus === 'ALL' ? 'DEAL' : dashFilterStatus;
             
             document.getElementById('kpiTitleRev').innerText = dashFilterStatus === 'ALL' ? 'TOTAL PROJECT AMOUNT (DEAL)' : `TOTAL PROJECT AMOUNT (${dashFilterStatus})`;
@@ -1874,7 +1870,7 @@
                 'PIC Customer', 'Nilai', 'Status', 'Tgl Approval', 'Keterangan', 
                 'No. Proposal', 'No. Quotation', 'No. PO/SPK', 'No. Invoice', 'No. BAST/P', 
                 'No. LPJ', 'Dibuat/Diteruskan Oleh', 'Lokasi', 'amount', 'MONTH', 
-                'Cust name', 'Aging', 'Aging (days)', 'STATUS'
+                'Cust name', 'STATUS'
             ];
             
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([templateHeaders]), "Data_Sales"); 
@@ -1899,36 +1895,50 @@
                    if(row['No. Projek']) { 
                        let noStr = String(row['No. Projek']).trim();
                        let existingIdx = dataDB.findIndex(x => String(x['No. Projek']) === noStr);
-                       let parsedDate = row['Tgl Dibuat'] ? parseExcelDate(row['Tgl Dibuat']) : '';
+                       let existingRow = existingIdx > -1 ? dataDB[existingIdx] : {};
                        
-                       let rowData = { ...row };
+                       let parsedDate = row['Tgl Dibuat'] ? parseExcelDate(row['Tgl Dibuat']) : (existingRow['Tgl Dibuat'] || '');
+                       let valNilai = row['Nilai'] || row['amount'] || existingRow['Nilai'] || 0;
+                       let valCustomer = row['Customer'] || row['Cust name'] || existingRow['Customer'] || '';
                        
+                       let calculatedMonth = existingRow['MONTH'] || 'JAN';
+                       if (parsedDate && parsedDate !== '-') {
+                           let d = new Date(parsedDate);
+                           if (!isNaN(d.getTime())) {
+                               const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                               calculatedMonth = monthNames[d.getMonth()];
+                           }
+                       }
+                       
+                       let rowData = {};
                        rowData['Tgl Dibuat'] = parsedDate;
+                       rowData['Jenis'] = row['Jenis'] || existingRow['Jenis'] || '';
                        rowData['No. Projek'] = noStr;
-                       rowData['MONTH'] = row['MONTH'] || row['Bulan'] || 'JAN';
-                       rowData['Judul Projek'] = row['Judul Projek'] || '';
-                       rowData['Jenis'] = row['Jenis'] || '';
-                       rowData['Cust name'] = row['Cust name'] || row['Customer'] || '';
-                       rowData['Customer'] = row['Customer'] || row['Cust name'] || '';
-                       rowData['Lokasi'] = row['Lokasi'] || '';
-                       rowData['amount'] = row['amount'] || row['Nilai'] || 0;
-                       rowData['Nilai'] = row['Nilai'] || row['amount'] || 0;
-                       rowData['Keterangan'] = row['Keterangan'] || ''; 
-                       rowData['Status'] = row['Status'] || '';
+                       rowData['Judul Projek'] = row['Judul Projek'] || existingRow['Judul Projek'] || '';
+                       rowData['Customer'] = valCustomer;
+                       rowData['PIC Customer'] = row['PIC Customer'] || existingRow['PIC Customer'] || '';
+                       rowData['Nilai'] = valNilai;
+                       rowData['Status'] = row['Status'] || existingRow['Status'] || '';
+                       rowData['Tgl Approval'] = row['Tgl Approval'] || existingRow['Tgl Approval'] || '';
+                       rowData['Keterangan'] = row['Keterangan'] || existingRow['Keterangan'] || '';
+                       rowData['No. Proposal'] = row['No. Proposal'] || existingRow['No. Proposal'] || '';
+                       rowData['No. Quotation'] = row['No. Quotation'] || row['Quotation'] || existingRow['No. Quotation'] || '';
+                       rowData['No. PO/SPK'] = row['No. PO/SPK'] || row['PO/SPK'] || existingRow['No. PO/SPK'] || '';
+                       rowData['No. Invoice'] = row['No. Invoice'] || row['Invoice'] || existingRow['No. Invoice'] || '';
+                       rowData['No. BAST/P'] = row['No. BAST/P'] || row['BAST/P'] || existingRow['No. BAST/P'] || '';
+                       rowData['No. LPJ'] = row['No. LPJ'] || row['Dok. LPJ'] || existingRow['No. LPJ'] || '';
+                       rowData['Dibuat/Diteruskan Oleh'] = row['Dibuat/Diteruskan Oleh'] || existingRow['Dibuat/Diteruskan Oleh'] || '';
+                       rowData['Lokasi'] = row['Lokasi'] || existingRow['Lokasi'] || '';
+                       rowData['amount'] = valNilai;
+                       rowData['MONTH'] = calculatedMonth;
+                       rowData['Cust name'] = valCustomer;
                        
-                       let valQuot = String(row['No. Quotation'] || '').trim();
-                       let valPO = String(row['No. PO/SPK'] || '').trim();
-                       let valInv = String(row['No. Invoice'] || '').trim();
-                       let valBAST = String(row['No. BAST/P'] || row['No. BAST/BAPP'] || '').trim();
-                       let valLPJ = String(row['No. LPJ'] || row['No. LPL'] || '').trim();
-                       let valStatusApp = String(row['Status'] || '').toUpperCase().trim();
-                       let valStatusFinal = String(row['STATUS'] || '').toUpperCase().trim();
-
-                       rowData['No. Quotation'] = valQuot;
-                       rowData['No. PO/SPK'] = valPO;
-                       rowData['No. Invoice'] = valInv;
-                       rowData['No. BAST/P'] = valBAST;
-                       rowData['No. LPJ'] = valLPJ;
+                       let valQuot = String(rowData['No. Quotation']).trim();
+                       let valPO = String(rowData['No. PO/SPK']).trim();
+                       let valInv = String(rowData['No. Invoice']).trim();
+                       let valBAST = String(rowData['No. BAST/P']).trim();
+                       let valLPJ = String(rowData['No. LPJ']).trim();
+                       let valStatusApp = String(rowData['Status']).toUpperCase().trim();
 
                        let isQuotFilled = (valQuot !== '' && valQuot !== '-');
                        let isAdvancedFilled = ((valPO !== '' && valPO !== '-') || 
@@ -1943,7 +1953,7 @@
                            calculatedStatus = 'DEAL';
                        }
 
-                       if (valStatusApp === 'CANCEL' || valStatusFinal === 'CANCEL' || valStatusFinal === 'NO DEAL') {
+                       if (valStatusApp === 'CANCEL' || valStatusApp === 'NO DEAL') {
                            calculatedStatus = 'NO DEAL';
                        }
                        
