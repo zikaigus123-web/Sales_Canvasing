@@ -618,9 +618,8 @@
                     </div>
 
                     <!-- Header & Filter -->
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                        <!-- REVISI 1: Ubah nama judul dashboard -->
-                        <h5 class="mb-0 fw-bold">DASHBOARD SALES CANVASING</h5>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+                        <h3 class="mb-0 fw-bold">Dashboard Sales Canvasing UT School</h3>
                         <div class="d-flex gap-2 align-items-center">
                             <label class="form-label mb-0 small fw-bold text-muted d-none d-sm-block">Filter Tampilan:</label>
                             <select class="form-select form-select-sm fw-bold border-dark shadow-sm" style="width: auto;" id="dashFilterStatus" onchange="renderDashboard()">
@@ -660,13 +659,10 @@
                             
                             <!-- 4 KPI Cards -->
                             <div class="row g-3 fs-kpi-row">
-                                <!-- REVISI 4: Pindah Posisi (Swap) Total Potential ke Kiri / Urutan 1 -->
                                 <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-info">
-                                        <!-- REVISI 3: Merubah teks menjadi TOTAL POTENTIAL AMOUNT PROJECT -->
                                         <div class="kpi-title" id="kpiTitleTotalAmount">TOTAL POTENTIAL AMOUNT PROJECT</div>
                                         <div class="kpi-value text-info" id="kpiTotalAmount">Rp 0</div>
-                                        <!-- REVISI 6: Menghapus ikon dan teks (Keseluruhan Filtered), disisakan height 18px agar tinggi sejajar dengan card lain -->
                                         <div class="small text-muted mt-2 fw-bold" style="height: 18px;"></div>
                                     </div>
                                 </div>
@@ -674,7 +670,6 @@
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning">
                                         <div class="kpi-title" id="kpiTitleRev">TOTAL PROJECT AMOUNT (DEAL)</div>
                                         <div class="kpi-value text-success" id="kpiRevenue">Rp 0</div>
-                                        <!-- REVISI 5: Menyiapkan ID untuk menampilkan presentase Deal vs Potential -->
                                         <div class="small text-muted mt-2 fw-bold" id="kpiDealPercent"><i class="fas fa-bullseye text-primary me-1"></i> 0% dari Potential</div>
                                     </div>
                                 </div>
@@ -682,14 +677,14 @@
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-dark">
                                         <div class="kpi-title">TOTAL PROJEK (FILTERED)</div>
                                         <div class="kpi-value" id="kpiTotalDeal">0</div>
-                                        <div class="small text-muted mt-2 fw-bold"><i class="fas fa-check-circle text-primary me-1"></i> </div>
+                                        <div class="small text-muted mt-2 fw-bold"><i class="fas fa-check-circle text-primary me-1"></i> Terdaftar di sistem</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
                                         <div class="kpi-title" id="kpiTitlePending">PROJEK TERTUNDA (ON PROGRESS)</div>
                                         <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
-                                        <div class="small text-muted mt-2 fw-bold"><i class="fas fa-clock text-primary me-1"></i></div>
+                                        <div class="small text-muted mt-2 fw-bold"><i class="fas fa-clock text-primary me-1"></i> Keseluruhan Menunggu</div>
                                     </div>
                                 </div>
                             </div>
@@ -698,7 +693,7 @@
                             <div class="row g-3 fs-chart-row mt-3">
                                 <div class="col-md-4">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
-                                        <h6 class="fw-bold mb-3 text-dark text-center">Project Comparison By Status</h6>
+                                        <h6 class="fw-bold mb-3 text-dark text-center">Perbandingan Status</h6>
                                         <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                             <canvas id="chartStatus"></canvas>
                                         </div>
@@ -706,7 +701,6 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
-                                        <!-- REVISI 2: Ubah Nama menjadi Komposisi Jenis Layanan -->
                                         <h6 class="fw-bold mb-3 text-dark text-center">Komposisi Jenis Layanan</h6>
                                         <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                             <canvas id="chartJenis"></canvas>
@@ -744,7 +738,7 @@
 
                             <!-- Distribusi Top Klien -->
                             <div class="card-custom mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark text-center">Top 5 Client</h6>
+                                <h6 class="fw-bold mb-3 text-dark text-center">Distribusi Top Klien (Nilai)</h6>
                                 <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                     <canvas id="chartClient"></canvas>
                                 </div>
@@ -752,7 +746,7 @@
 
                             <!-- Tabel Matriks -->
                             <div class="card-custom flex-grow-1 mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark">Kontribusi Layanan per Bulan</h6>
+                                <h6 class="fw-bold mb-3 text-dark">Matriks Jumlah Projek (Terfilter)</h6>
                                 <div class="table-responsive">
                                     <table class="table table-hover table-bordered text-center align-middle mb-0" id="tblMatriksDashboard">
                                     </table>
@@ -1102,14 +1096,14 @@
             if(!ket || String(ket).trim() === '') return 'Tanpa Keterangan';
             let lowerKet = String(ket).toLowerCase();
             
-            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Harga';
+            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Perubahan Harga';
             if(lowerKet.includes('revisi')) return 'Revisi';
-            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Requotation';
+            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Gunakan Quotation Lama';
             if(lowerKet.includes('gabung') || lowerKet.includes('bersama') || lowerKet.includes('dijadikan 1')) return 'Digabung Event Lain';
             if(lowerKet.includes('event') || lowerKet.includes('paket')) return 'Perubahan Paket Pelatihan';
             if(lowerKet.includes('double')) return 'Double Input';
             if(lowerKet.includes('perubahan nama') || lowerKet.includes('company') || lowerKet.includes('pt') || lowerKet.includes('customer')) return 'Perubahan Data Customer';
-            if(lowerKet.includes('jadwal')) return 'Reschedule';
+            if(lowerKet.includes('jadwal')) return 'Perubahan Jadwal';
             
             return 'Alasan Lainnya';
         }
@@ -1339,6 +1333,7 @@
             let matrix = {}; 
             let monthsSet = new Set();
             
+            // Variabel Penampung Grafik
             let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0 };
             let jenisCounts = {};
             let cancelCounts = {}; 
@@ -1362,6 +1357,7 @@
                 let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
+                // Hitung chart status (Berdasarkan filter bulan agar sinkron)
                 if(isPassedBulan) {
                     if(statusCounts[status] !== undefined) statusCounts[status]++;
                     if (status === 'ON PROGRESS') countInProgressOverall++;
@@ -1374,6 +1370,7 @@
                     }
                 }
 
+                // Logika Filter untuk KPI, Map, dan Matrix
                 if (isPassedStatus && isPassedBulan) {
                     countFiltered++; 
                     totalAmountFiltered += amt;
@@ -1406,7 +1403,7 @@
                 }
             });
 
-            // Update Label KPI Dinamis (REVISI 3 & 4)
+            // Update Label KPI Dinamis
             let filterTextName = dashFilterStatus === 'ALL' ? 'DEAL' : dashFilterStatus;
             
             document.getElementById('kpiTitleRev').innerText = dashFilterStatus === 'ALL' ? 'TOTAL PROJECT AMOUNT (DEAL)' : `TOTAL PROJECT AMOUNT (${dashFilterStatus})`;
@@ -1420,7 +1417,6 @@
             
             document.getElementById('kpiTotalPending').innerText = dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered;
             
-            // REVISI 5: Perhitungan persentase pada Deal vs Potential
             let dealPct = totalAmountFiltered === 0 ? "0" : ((totalRev / totalAmountFiltered) * 100).toFixed(1);
             document.getElementById('kpiDealPercent').innerHTML = `<i class="fas fa-bullseye text-primary me-1"></i> ${dealPct}% dari Potential Amount`;
 
@@ -1874,10 +1870,11 @@
         function downloadTemplate() { 
             const wb = XLSX.utils.book_new(); 
             const templateHeaders = [
-                'Tgl Dibuat', 'Jenis', 'No. Projek', 'Judul Projek', 'No. Proposal', 
-                'No. Quotation', 'No. PO/SPK', 'No. Invoice', 'No. BAST/BAPP', 'No. LPL', 
-                'Keterangan', 'Customer', 'amount', 'MONTH', 'Cust name', 'Aging', 
-                'Aging (days)', 'STATUS', 'PIC Customer', 'Nilai', 'Status', 'Tgl Approval'
+                'Tgl Dibuat', 'Jenis', 'No. Projek', 'Judul Projek', 'Customer', 
+                'PIC Customer', 'Nilai', 'Status', 'Tgl Approval', 'Keterangan', 
+                'No. Proposal', 'No. Quotation', 'No. PO/SPK', 'No. Invoice', 'No. BAST/P', 
+                'No. LPJ', 'Dibuat/Diteruskan Oleh', 'Lokasi', 'amount', 'MONTH', 
+                'Cust name', 'Aging', 'Aging (days)', 'STATUS'
             ];
             
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([templateHeaders]), "Data_Sales"); 
@@ -1916,20 +1913,52 @@
                        rowData['Lokasi'] = row['Lokasi'] || '';
                        rowData['amount'] = row['amount'] || row['Nilai'] || 0;
                        rowData['Nilai'] = row['Nilai'] || row['amount'] || 0;
-                       rowData['Status'] = row['Status'] || '';
-                       rowData['STATUS'] = row['STATUS'] || 'ON PROGRESS';
                        rowData['Keterangan'] = row['Keterangan'] || ''; 
+                       rowData['Status'] = row['Status'] || '';
+                       
+                       let valQuot = String(row['No. Quotation'] || '').trim();
+                       let valPO = String(row['No. PO/SPK'] || '').trim();
+                       let valInv = String(row['No. Invoice'] || '').trim();
+                       let valBAST = String(row['No. BAST/P'] || row['No. BAST/BAPP'] || '').trim();
+                       let valLPJ = String(row['No. LPJ'] || row['No. LPL'] || '').trim();
+                       let valStatusApp = String(row['Status'] || '').toUpperCase().trim();
+                       let valStatusFinal = String(row['STATUS'] || '').toUpperCase().trim();
+
+                       rowData['No. Quotation'] = valQuot;
+                       rowData['No. PO/SPK'] = valPO;
+                       rowData['No. Invoice'] = valInv;
+                       rowData['No. BAST/P'] = valBAST;
+                       rowData['No. LPJ'] = valLPJ;
+
+                       let isQuotFilled = (valQuot !== '' && valQuot !== '-');
+                       let isAdvancedFilled = ((valPO !== '' && valPO !== '-') || 
+                                               (valInv !== '' && valInv !== '-') || 
+                                               (valBAST !== '' && valBAST !== '-') || 
+                                               (valLPJ !== '' && valLPJ !== '-'));
+
+                       let calculatedStatus = 'NEW'; 
+                       if (isQuotFilled && !isAdvancedFilled) {
+                           calculatedStatus = 'ON PROGRESS';
+                       } else if (isAdvancedFilled) {
+                           calculatedStatus = 'DEAL';
+                       }
+
+                       if (valStatusApp === 'CANCEL' || valStatusFinal === 'CANCEL' || valStatusFinal === 'NO DEAL') {
+                           calculatedStatus = 'NO DEAL';
+                       }
+                       
+                       rowData['STATUS'] = calculatedStatus;
                        rowData['lastUpdatedBy'] = currentUser.username;
                        rowData['lastUpdatedAt'] = new Date().toISOString();
 
                        if (existingIdx > -1) { 
                            dataDB[existingIdx] = { ...dataDB[existingIdx], ...rowData }; 
                            updated++; 
-                           logDetails.push(`[UPDATE] No ${noStr} diperbarui dari Excel.`); 
+                           logDetails.push(`[UPDATE] No ${noStr} diperbarui dari Excel. (Auto-Status: ${calculatedStatus})`); 
                        } else { 
                            dataDB.push(rowData); 
                            added++; 
-                           logDetails.push(`[BARU] No ${noStr} ditambahkan dari Excel.`); 
+                           logDetails.push(`[BARU] No ${noStr} ditambahkan dari Excel. (Auto-Status: ${calculatedStatus})`); 
                        }
                    } 
                }); 
