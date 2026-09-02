@@ -265,15 +265,15 @@
             letter-spacing: 0.5px; 
         }
         
+        /* REVISI 1: Merubah white-space menjadi normal dan menggunakan word-break agar angka full terlihat */
         .kpi-value { 
-            font-size: clamp(1.2rem, 1.8vw, 2.2rem); 
+            font-size: clamp(1rem, 1.5vw, 1.8rem); 
             font-weight: 800; 
             color: var(--sidebar-bg); 
             margin-top: 0.25rem; 
             line-height: 1.2; 
-            white-space: nowrap; 
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal; 
+            word-break: break-word;
         }
 
         /* Tables */
@@ -482,12 +482,12 @@
             flex-shrink: 0; 
         }
 
+        /* REVISI 1: Text-wrapping pada kpi-value saat Fullscreen */
         :fullscreen #view-dashboard .kpi-value {
-            font-size: clamp(1rem, 1.2vw, 1.8rem);
+            font-size: clamp(0.9rem, 1.2vw, 1.6rem);
             margin-top: 2px;
-            white-space: nowrap; 
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: normal; 
+            word-break: break-word;
         }
         
         :fullscreen #view-dashboard .chart-container {
@@ -620,8 +620,11 @@
                     <!-- Header & Filter -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
                         <h3 class="mb-0 fw-bold">Dashboard Sales Canvasing UT School</h3>
-                        <div class="d-flex gap-2 align-items-center">
-                            <label class="form-label mb-0 small fw-bold text-muted d-none d-sm-block">Filter Tampilan:</label>
+                        
+                        <!-- FITUR BARU: Penambahan Filter YTD & Filter Kurun Waktu -->
+                        <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
+                            <label class="form-label mb-0 small fw-bold text-muted d-none d-xl-block">Filter Tampilan:</label>
+                            
                             <select class="form-select form-select-sm fw-bold border-dark shadow-sm" style="width: auto;" id="dashFilterStatus" onchange="renderDashboard()">
                                 <option value="ALL">Semua Status (ALL)</option>
                                 <option value="DEAL">Hanya DEAL</option>
@@ -632,6 +635,7 @@
                             
                             <select class="form-select form-select-sm fw-bold border-dark shadow-sm" style="width: auto;" id="dashFilterBulan" onchange="renderDashboard()">
                                 <option value="ALL">Semua Bulan (ALL)</option>
+                                <option value="YTD">YTD (Year to Date)</option>
                                 <option value="JAN">JAN</option>
                                 <option value="FEB">FEB</option>
                                 <option value="MAR">MAR</option>
@@ -645,6 +649,12 @@
                                 <option value="NOV">NOV</option>
                                 <option value="DEC">DEC</option>
                             </select>
+
+                            <div class="input-group input-group-sm shadow-sm" style="width: auto;">
+                                <input type="date" id="dashStartDate" class="form-control fw-bold border-dark" title="Mulai Tanggal" onchange="renderDashboard()">
+                                <span class="input-group-text bg-light border-dark">-</span>
+                                <input type="date" id="dashEndDate" class="form-control fw-bold border-dark" title="Sampai Tanggal" onchange="renderDashboard()">
+                            </div>
                             
                             <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="renderDashboard()"><i class="fas fa-sync-alt me-1"></i> Perbarui</button>
                             <button class="btn btn-dark btn-sm fw-bold" onclick="toggleFullscreen()"><i class="fas fa-expand me-1" id="fsIcon"></i> Fullscreen</button>
@@ -1323,6 +1333,8 @@
             const data = getDB(DB_KEY_SALES);
             const dashFilterStatus = document.getElementById('dashFilterStatus').value; 
             const dashFilterBulan = document.getElementById('dashFilterBulan').value; 
+            const dashStartDate = document.getElementById('dashStartDate').value;
+            const dashEndDate = document.getElementById('dashEndDate').value;
             
             let totalRev = 0; 
             let totalAmountFiltered = 0; 
@@ -1342,10 +1354,7 @@
 
             data.forEach(row => {
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
-                
-                if(status === 'PENDING') {
-                    status = 'ON PROGRESS'; 
-                }
+                if(status === 'PENDING') status = 'ON PROGRESS'; 
 
                 let amt = parseAmount(row['amount'] || row['Nilai']);
                 let clientName = row['Cust name'] || row['Customer'] || 'Unknown';
@@ -1353,8 +1362,34 @@
                 let jenis = row['Jenis'] || 'Lainnya';
                 let lokasiRaw = (row['Lokasi'] || '').trim();
 
-                let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
+                let isPassedBulan = true;
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
+
+                // --- LOGIKA FILTER TANGGAL BARU ---
+                let rowDateStr = row['Tgl Dibuat'] || '';
+                let rowDate = new Date(rowDateStr);
+
+                if (dashStartDate && dashEndDate) {
+                    let start = new Date(dashStartDate);
+                    start.setHours(0,0,0,0);
+                    let end = new Date(dashEndDate);
+                    end.setHours(23,59,59,999);
+                    
+                    if (isNaN(rowDate.getTime()) || rowDate < start || rowDate > end) {
+                        isPassedBulan = false;
+                    }
+                } else {
+                    if (dashFilterBulan === 'YTD') {
+                        let currentYear = new Date().getFullYear();
+                        if (isNaN(rowDate.getTime()) || rowDate.getFullYear() !== currentYear) {
+                            isPassedBulan = false;
+                        }
+                    } else if (dashFilterBulan !== 'ALL') {
+                        if (bulan !== dashFilterBulan) {
+                            isPassedBulan = false;
+                        }
+                    }
+                }
 
                 if(isPassedBulan) {
                     if(statusCounts[status] !== undefined) statusCounts[status]++;
@@ -1409,7 +1444,9 @@
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
             document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
-            document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
+            // Penyesuaian total data filter keseluruhan
+            let isNoDateFilter = (dashFilterBulan === 'ALL' && !dashStartDate && !dashEndDate);
+            document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (isNoDateFilter ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
             
             document.getElementById('kpiTotalPending').innerText = dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered;
             
@@ -1420,8 +1457,17 @@
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'ADMIN';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
             
-            let textBulanBanner = dashFilterBulan === 'ALL' ? '' : ` di bulan ${dashFilterBulan}`;
-            let jumlahTeksBanner = dashFilterStatus === 'ALL' ? (dashFilterBulan === 'ALL' ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
+            // Teks Banner dinamis
+            let textBulanBanner = '';
+            if (dashStartDate && dashEndDate) {
+                textBulanBanner = ` pada periode ${dashStartDate} hingga ${dashEndDate}`;
+            } else if (dashFilterBulan === 'YTD') {
+                textBulanBanner = ` sepanjang tahun ini (YTD)`;
+            } else if (dashFilterBulan !== 'ALL') {
+                textBulanBanner = ` di bulan ${dashFilterBulan}`;
+            }
+
+            let jumlahTeksBanner = dashFilterStatus === 'ALL' ? (isNoDateFilter ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
             
             document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${jumlahTeksBanner} data projek terdaftar</strong>${textBulanBanner} dengan total <em>revenue</em> ${filterTextName} mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
 
@@ -1690,6 +1736,8 @@
             setTimeout(() => {
                 const data = getDB(DB_KEY_SALES);
                 const dashFilterBulan = document.getElementById('dashFilterBulan').value;
+                const dashStartDate = document.getElementById('dashStartDate').value;
+                const dashEndDate = document.getElementById('dashEndDate').value;
                 
                 document.getElementById('titleCancelList').innerText = `Daftar Projek Cancel: ${reason}`;
 
@@ -1697,7 +1745,31 @@
                     let status = String(row['STATUS'] || '').toUpperCase().trim();
                     let bulan = String(row['MONTH'] || '-').toUpperCase().trim();
                     let ketRaw = row['Keterangan'] || row['keterangan'] || '';
-                    let isPassedBulan = (dashFilterBulan === 'ALL' || bulan === dashFilterBulan);
+                    
+                    let isPassedBulan = true;
+                    let rowDateStr = row['Tgl Dibuat'] || '';
+                    let rowDate = new Date(rowDateStr);
+
+                    if (dashStartDate && dashEndDate) {
+                        let start = new Date(dashStartDate);
+                        start.setHours(0,0,0,0);
+                        let end = new Date(dashEndDate);
+                        end.setHours(23,59,59,999);
+                        if (isNaN(rowDate.getTime()) || rowDate < start || rowDate > end) {
+                            isPassedBulan = false;
+                        }
+                    } else {
+                        if (dashFilterBulan === 'YTD') {
+                            let currentYear = new Date().getFullYear();
+                            if (isNaN(rowDate.getTime()) || rowDate.getFullYear() !== currentYear) {
+                                isPassedBulan = false;
+                            }
+                        } else if (dashFilterBulan !== 'ALL') {
+                            if (bulan !== dashFilterBulan) {
+                                isPassedBulan = false;
+                            }
+                        }
+                    }
                     
                     if(isPassedBulan && (status === 'CANCEL' || status === 'NO DEAL')) {
                         return kategorikanCancel(ketRaw) === reason;
