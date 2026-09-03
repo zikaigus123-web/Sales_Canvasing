@@ -265,15 +265,15 @@
             letter-spacing: 0.5px; 
         }
         
-        /* REVISI 1: Merubah white-space menjadi normal dan menggunakan word-break agar angka full terlihat */
         .kpi-value { 
-            font-size: clamp(1rem, 1.5vw, 1.8rem); 
+            font-size: clamp(1.2rem, 1.8vw, 2.2rem); 
             font-weight: 800; 
             color: var(--sidebar-bg); 
             margin-top: 0.25rem; 
             line-height: 1.2; 
-            white-space: normal; 
-            word-break: break-word;
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* Tables */
@@ -482,12 +482,12 @@
             flex-shrink: 0; 
         }
 
-        /* REVISI 1: Text-wrapping pada kpi-value saat Fullscreen */
         :fullscreen #view-dashboard .kpi-value {
             font-size: clamp(0.9rem, 1.2vw, 1.6rem);
             margin-top: 2px;
-            white-space: normal; 
-            word-break: break-word;
+            white-space: nowrap !important; 
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
         }
         
         :fullscreen #view-dashboard .chart-container {
@@ -621,7 +621,6 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
                         <h3 class="mb-0 fw-bold">Dashboard Sales Canvasing UT School</h3>
                         
-                        <!-- FITUR BARU: Penambahan Filter YTD & Filter Kurun Waktu -->
                         <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
                             <label class="form-label mb-0 small fw-bold text-muted d-none d-xl-block">Filter Tampilan:</label>
                             
@@ -687,14 +686,14 @@
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-dark">
                                         <div class="kpi-title">TOTAL PROJEK (FILTERED)</div>
                                         <div class="kpi-value" id="kpiTotalDeal">0</div>
-                                        <div class="small text-muted mt-2 fw-bold"></div>
+                                        <div class="small text-muted mt-2 fw-bold">Terdaftar di sistem</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
                                         <div class="kpi-title" id="kpiTitlePending">PROJEK TERTUNDA (ON PROGRESS)</div>
                                         <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
-                                        <div class="small text-muted mt-2 fw-bold"></div>
+                                        <div class="small text-muted mt-2 fw-bold">Keseluruhan Menunggu</div>
                                     </div>
                                 </div>
                             </div>
@@ -703,7 +702,7 @@
                             <div class="row g-3 fs-chart-row mt-3">
                                 <div class="col-md-4">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
-                                        <h6 class="fw-bold mb-3 text-dark text-center">Project Comparison By Status</h6>
+                                        <h6 class="fw-bold mb-3 text-dark text-center">Perbandingan Status</h6>
                                         <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                             <canvas id="chartStatus"></canvas>
                                         </div>
@@ -748,7 +747,7 @@
 
                             <!-- Distribusi Top Klien -->
                             <div class="card-custom mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark text-center">Top 5 Client</h6>
+                                <h6 class="fw-bold mb-3 text-dark text-center">Distribusi Top Klien (Nilai)</h6>
                                 <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                     <canvas id="chartClient"></canvas>
                                 </div>
@@ -756,7 +755,7 @@
 
                             <!-- Tabel Matriks -->
                             <div class="card-custom flex-grow-1 mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark">Kontribusi Layanan per Bulan</h6>
+                                <h6 class="fw-bold mb-3 text-dark">Matriks Jumlah Projek (Terfilter)</h6>
                                 <div class="table-responsive">
                                     <table class="table table-hover table-bordered text-center align-middle mb-0" id="tblMatriksDashboard">
                                     </table>
@@ -1106,14 +1105,14 @@
             if(!ket || String(ket).trim() === '') return 'Tanpa Keterangan';
             let lowerKet = String(ket).toLowerCase();
             
-            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Harga';
+            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Perubahan Harga';
             if(lowerKet.includes('revisi')) return 'Revisi';
-            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Requotation';
-            if(lowerKet.includes('gabung') || lowerKet.includes('bersama') || lowerKet.includes('dijadikan 1')) return 'Reschedule';
+            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Gunakan Quotation Lama';
+            if(lowerKet.includes('gabung') || lowerKet.includes('bersama') || lowerKet.includes('dijadikan 1')) return 'Digabung Event Lain';
             if(lowerKet.includes('event') || lowerKet.includes('paket')) return 'Perubahan Paket Pelatihan';
             if(lowerKet.includes('double')) return 'Double Input';
             if(lowerKet.includes('perubahan nama') || lowerKet.includes('company') || lowerKet.includes('pt') || lowerKet.includes('customer')) return 'Perubahan Data Customer';
-            if(lowerKet.includes('jadwal')) return 'Reschedule';
+            if(lowerKet.includes('jadwal')) return 'Perubahan Jadwal';
             
             return 'Alasan Lainnya';
         }
@@ -1354,7 +1353,10 @@
 
             data.forEach(row => {
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
-                if(status === 'PENDING') status = 'ON PROGRESS'; 
+                
+                if(status === 'PENDING') {
+                    status = 'ON PROGRESS'; 
+                }
 
                 let amt = parseAmount(row['amount'] || row['Nilai']);
                 let clientName = row['Cust name'] || row['Customer'] || 'Unknown';
@@ -1365,7 +1367,6 @@
                 let isPassedBulan = true;
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
-                // --- LOGIKA FILTER TANGGAL BARU ---
                 let rowDateStr = row['Tgl Dibuat'] || '';
                 let rowDate = new Date(rowDateStr);
 
@@ -1444,7 +1445,6 @@
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
             document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
-            // Penyesuaian total data filter keseluruhan
             let isNoDateFilter = (dashFilterBulan === 'ALL' && !dashStartDate && !dashEndDate);
             document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (isNoDateFilter ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
             
@@ -1457,7 +1457,6 @@
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'ADMIN';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
             
-            // Teks Banner dinamis
             let textBulanBanner = '';
             if (dashStartDate && dashEndDate) {
                 textBulanBanner = ` pada periode ${dashStartDate} hingga ${dashEndDate}`;
@@ -1492,12 +1491,10 @@
             document.getElementById('tblMatriksDashboard').innerHTML = htmlMatriks + `</tbody>`;
 
             // --- RENDER GRAFIK ---
-         const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
+            const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
             
-            // 1. Chart Klien (Doughnut)
             let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
             
-            // Logika Warna Kuning UT Dinamis
             let availableColors = ['#1A1A1A', '#3b82f6', '#718096', '#22c55e', '#ef4444', '#f97316'];
             let dynamicClientColors = sortedClients.map(c => {
                 let upper = String(c).toUpperCase();
@@ -1507,6 +1504,18 @@
                     return availableColors.shift() || '#cbd5e1'; 
                 }
             });
+
+            if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
+            chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
+                type: 'doughnut',
+                data: { 
+                    labels: sortedClients, 
+                    datasets: [{ 
+                        data: sortedClients.map(c => clients[c]), 
+                        backgroundColor: dynamicClientColors, 
+                        borderWidth: 0 
+                    }] 
+                },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
@@ -1648,29 +1657,97 @@
                 }
             });
 
-            let trendLabels = arrMonths; 
+            let isDailyView = (dashFilterBulan !== 'ALL' && dashFilterBulan !== 'YTD' && !dashStartDate && !dashEndDate) || (dashStartDate && dashEndDate);
             
-            let dataTrendDeal = trendLabels.map(m => {
-                let sum = 0;
-                data.forEach(r => { 
-                    if((r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
-                        sum += parseAmount(r['amount']||r['Nilai']); 
-                    }
-                });
-                return sum;
-            });
-            
-            let dataTrendForecast = trendLabels.map(m => {
-                let sum = 0;
-                data.forEach(r => { 
+            let trendLabels = [];
+            let dataTrendDeal = [];
+            let dataTrendForecast = [];
+
+            if (isDailyView) {
+                let dateSet = new Set();
+                data.forEach(r => {
                     let st = String(r['STATUS']||'').toUpperCase().trim();
                     if(st === 'PENDING') st = 'ON PROGRESS';
-                    if((r['MONTH']||'-') === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
-                        sum += parseAmount(r['amount']||r['Nilai']); 
+                    let b = String(r['MONTH']||'-').toUpperCase().trim();
+                    let rowDateStr = r['Tgl Dibuat'] || '';
+                    
+                    let isPassedBulan = true;
+                    let rowDate = new Date(rowDateStr);
+
+                    if (dashStartDate && dashEndDate) {
+                        let start = new Date(dashStartDate); start.setHours(0,0,0,0);
+                        let end = new Date(dashEndDate); end.setHours(23,59,59,999);
+                        if (isNaN(rowDate.getTime()) || rowDate < start || rowDate > end) {
+                            isPassedBulan = false;
+                        }
+                    } else {
+                        if (dashFilterBulan !== 'ALL' && b !== dashFilterBulan) {
+                            isPassedBulan = false;
+                        }
+                    }
+
+                    if (isPassedBulan && rowDateStr !== '' && rowDateStr !== '-') {
+                        dateSet.add(rowDateStr);
                     }
                 });
-                return sum;
-            });
+                
+                let sortedDates = Array.from(dateSet).sort((a,b) => new Date(a) - new Date(b));
+                
+                dataTrendDeal = sortedDates.map(dateStr => {
+                    let sum = 0;
+                    data.forEach(r => {
+                        if (r['Tgl Dibuat'] === dateStr && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
+                            sum += parseAmount(r['amount']||r['Nilai']);
+                        }
+                    });
+                    return sum;
+                });
+
+                dataTrendForecast = sortedDates.map(dateStr => {
+                    let sum = 0;
+                    data.forEach(r => {
+                        let st = String(r['STATUS']||'').toUpperCase().trim();
+                        if(st === 'PENDING') st = 'ON PROGRESS';
+                        if (r['Tgl Dibuat'] === dateStr && (st === 'DEAL' || st === 'ON PROGRESS')) {
+                            sum += parseAmount(r['amount']||r['Nilai']);
+                        }
+                    });
+                    return sum;
+                });
+                
+                trendLabels = sortedDates.map(d => {
+                    let dateObj = new Date(d);
+                    if(isNaN(dateObj.getTime())) return d;
+                    let mNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+                    return dateObj.getDate() + ' ' + mNames[dateObj.getMonth()];
+                });
+
+            } else {
+                trendLabels = arrMonths;
+                dataTrendDeal = trendLabels.map(m => {
+                    let sum = 0;
+                    data.forEach(r => { 
+                        let b = String(r['MONTH']||'-').toUpperCase().trim();
+                        if(b === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
+                            sum += parseAmount(r['amount']||r['Nilai']); 
+                        }
+                    });
+                    return sum;
+                });
+                
+                dataTrendForecast = trendLabels.map(m => {
+                    let sum = 0;
+                    data.forEach(r => { 
+                        let b = String(r['MONTH']||'-').toUpperCase().trim();
+                        let st = String(r['STATUS']||'').toUpperCase().trim();
+                        if(st === 'PENDING') st = 'ON PROGRESS';
+                        if(b === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
+                            sum += parseAmount(r['amount']||r['Nilai']); 
+                        }
+                    });
+                    return sum;
+                });
+            }
 
             if(chartInstances['chartTrend']) chartInstances['chartTrend'].destroy();
             
@@ -1930,7 +2007,7 @@
             tbody.innerHTML = html || `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
         }
 
-        // --- MANAJEMEN EXCEL IMPORT / EXPORT (KOLOM LENGKAP & DINAMIS) ---
+        // --- MANAJEMEN EXCEL IMPORT / EXPORT ---
         function parseExcelDate(serial) { 
             if (typeof serial === 'number') return new Date((Math.floor(serial - 25569) * 86400) * 1000).toISOString().split('T')[0]; 
             if (typeof serial === 'string') { let d = new Date(serial); if(!isNaN(d.getTime())) return d.toISOString().split('T')[0]; } return serial; 
@@ -1983,65 +2060,32 @@
                            }
                        }
                        
-                       let rowData = {};
+                       let rowData = { ...row };
+                       
                        rowData['Tgl Dibuat'] = parsedDate;
-                       rowData['Jenis'] = row['Jenis'] || existingRow['Jenis'] || '';
                        rowData['No. Projek'] = noStr;
-                       rowData['Judul Projek'] = row['Judul Projek'] || existingRow['Judul Projek'] || '';
-                       rowData['Customer'] = valCustomer;
-                       rowData['PIC Customer'] = row['PIC Customer'] || existingRow['PIC Customer'] || '';
-                       rowData['Nilai'] = valNilai;
-                       rowData['Status'] = row['Status'] || existingRow['Status'] || '';
-                       rowData['Tgl Approval'] = row['Tgl Approval'] || existingRow['Tgl Approval'] || '';
-                       rowData['Keterangan'] = row['Keterangan'] || existingRow['Keterangan'] || '';
-                       rowData['No. Proposal'] = row['No. Proposal'] || existingRow['No. Proposal'] || '';
-                       rowData['No. Quotation'] = row['No. Quotation'] || row['Quotation'] || existingRow['No. Quotation'] || '';
-                       rowData['No. PO/SPK'] = row['No. PO/SPK'] || row['PO/SPK'] || existingRow['No. PO/SPK'] || '';
-                       rowData['No. Invoice'] = row['No. Invoice'] || row['Invoice'] || existingRow['No. Invoice'] || '';
-                       rowData['No. BAST/P'] = row['No. BAST/P'] || row['BAST/P'] || existingRow['No. BAST/P'] || '';
-                       rowData['No. LPJ'] = row['No. LPJ'] || row['Dok. LPJ'] || existingRow['No. LPJ'] || '';
-                       rowData['Dibuat/Diteruskan Oleh'] = row['Dibuat/Diteruskan Oleh'] || existingRow['Dibuat/Diteruskan Oleh'] || '';
-                       rowData['Lokasi'] = row['Lokasi'] || existingRow['Lokasi'] || '';
-                       rowData['amount'] = valNilai;
-                       rowData['MONTH'] = calculatedMonth;
-                       rowData['Cust name'] = valCustomer;
-                       
-                       let valQuot = String(rowData['No. Quotation']).trim();
-                       let valPO = String(rowData['No. PO/SPK']).trim();
-                       let valInv = String(rowData['No. Invoice']).trim();
-                       let valBAST = String(rowData['No. BAST/P']).trim();
-                       let valLPJ = String(rowData['No. LPJ']).trim();
-                       let valStatusApp = String(rowData['Status']).toUpperCase().trim();
-
-                       let isQuotFilled = (valQuot !== '' && valQuot !== '-');
-                       let isAdvancedFilled = ((valPO !== '' && valPO !== '-') || 
-                                               (valInv !== '' && valInv !== '-') || 
-                                               (valBAST !== '' && valBAST !== '-') || 
-                                               (valLPJ !== '' && valLPJ !== '-'));
-
-                       let calculatedStatus = 'NEW'; 
-                       if (isQuotFilled && !isAdvancedFilled) {
-                           calculatedStatus = 'ON PROGRESS';
-                       } else if (isAdvancedFilled) {
-                           calculatedStatus = 'DEAL';
-                       }
-
-                       if (valStatusApp === 'CANCEL' || valStatusApp === 'NO DEAL') {
-                           calculatedStatus = 'NO DEAL';
-                       }
-                       
-                       rowData['STATUS'] = calculatedStatus;
+                       rowData['MONTH'] = row['MONTH'] || row['Bulan'] || 'JAN';
+                       rowData['Judul Projek'] = row['Judul Projek'] || '';
+                       rowData['Jenis'] = row['Jenis'] || '';
+                       rowData['Cust name'] = row['Cust name'] || row['Customer'] || '';
+                       rowData['Customer'] = row['Customer'] || row['Cust name'] || '';
+                       rowData['Lokasi'] = row['Lokasi'] || '';
+                       rowData['amount'] = row['amount'] || row['Nilai'] || 0;
+                       rowData['Nilai'] = row['Nilai'] || row['amount'] || 0;
+                       rowData['Status'] = row['Status'] || '';
+                       rowData['STATUS'] = row['STATUS'] || 'ON PROGRESS';
+                       rowData['Keterangan'] = row['Keterangan'] || ''; 
                        rowData['lastUpdatedBy'] = currentUser.username;
                        rowData['lastUpdatedAt'] = new Date().toISOString();
 
                        if (existingIdx > -1) { 
                            dataDB[existingIdx] = { ...dataDB[existingIdx], ...rowData }; 
                            updated++; 
-                           logDetails.push(`[UPDATE] No ${noStr} diperbarui dari Excel. (Auto-Status: ${calculatedStatus})`); 
+                           logDetails.push(`[UPDATE] No ${noStr} diperbarui dari Excel.`); 
                        } else { 
                            dataDB.push(rowData); 
                            added++; 
-                           logDetails.push(`[BARU] No ${noStr} ditambahkan dari Excel. (Auto-Status: ${calculatedStatus})`); 
+                           logDetails.push(`[BARU] No ${noStr} ditambahkan dari Excel.`); 
                        }
                    } 
                }); 
