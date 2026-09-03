@@ -1321,6 +1321,8 @@
         // --- DASHBOARD ANALYTICS ---
         function parseAmount(val) {
             if(!val) return 0;
+            // FITUR BARU: Jika tipe data sudah number (dibaca Excel), langsung kembalikan agar tidak terpotong separator
+            if(typeof val === 'number') return Math.round(val);
             let str = String(val).replace(/[^0-9,-]+/g,"").replace(/\./g, "").replace(/,/g, ""); 
             return parseInt(str) || 0;
         }
@@ -1365,23 +1367,18 @@
                 let isPassedBulan = true;
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
-                // --- LOGIKA FILTER TANGGAL BARU ---
-                let rowDateStr = row['Tgl Dibuat'] || '';
-                let rowDate = new Date(rowDateStr);
+                // --- REVISI: Logika filter kebal timezone (menggunakan string comparison yyyy-mm-dd) ---
+                let rowDateStr = (row['Tgl Dibuat'] || '').toString().trim();
+                if (rowDateStr.length >= 10) rowDateStr = rowDateStr.substring(0, 10);
 
                 if (dashStartDate && dashEndDate) {
-                    let start = new Date(dashStartDate);
-                    start.setHours(0,0,0,0);
-                    let end = new Date(dashEndDate);
-                    end.setHours(23,59,59,999);
-                    
-                    if (isNaN(rowDate.getTime()) || rowDate < start || rowDate > end) {
+                    if (!rowDateStr || rowDateStr < dashStartDate || rowDateStr > dashEndDate) {
                         isPassedBulan = false;
                     }
                 } else {
                     if (dashFilterBulan === 'YTD') {
                         let currentYear = new Date().getFullYear();
-                        if (isNaN(rowDate.getTime()) || rowDate.getFullYear() !== currentYear) {
+                        if (!rowDateStr || !rowDateStr.startsWith(currentYear.toString())) {
                             isPassedBulan = false;
                         }
                     } else if (dashFilterBulan !== 'ALL') {
@@ -1747,21 +1744,19 @@
                     let ketRaw = row['Keterangan'] || row['keterangan'] || '';
                     
                     let isPassedBulan = true;
-                    let rowDateStr = row['Tgl Dibuat'] || '';
-                    let rowDate = new Date(rowDateStr);
+
+                    // --- REVISI: Logika filter kebal timezone (menggunakan string comparison yyyy-mm-dd) ---
+                    let rowDateStr = (row['Tgl Dibuat'] || '').toString().trim();
+                    if (rowDateStr.length >= 10) rowDateStr = rowDateStr.substring(0, 10);
 
                     if (dashStartDate && dashEndDate) {
-                        let start = new Date(dashStartDate);
-                        start.setHours(0,0,0,0);
-                        let end = new Date(dashEndDate);
-                        end.setHours(23,59,59,999);
-                        if (isNaN(rowDate.getTime()) || rowDate < start || rowDate > end) {
+                        if (!rowDateStr || rowDateStr < dashStartDate || rowDateStr > dashEndDate) {
                             isPassedBulan = false;
                         }
                     } else {
                         if (dashFilterBulan === 'YTD') {
                             let currentYear = new Date().getFullYear();
-                            if (isNaN(rowDate.getTime()) || rowDate.getFullYear() !== currentYear) {
+                            if (!rowDateStr || !rowDateStr.startsWith(currentYear.toString())) {
                                 isPassedBulan = false;
                             }
                         } else if (dashFilterBulan !== 'ALL') {
@@ -2005,6 +2000,7 @@
                        rowData['MONTH'] = calculatedMonth;
                        rowData['Cust name'] = valCustomer;
                        
+                       // --- REVISI: Logika Status Sesuai Ketentuan Baru ---
                        let valQuot = String(rowData['No. Quotation']).trim();
                        let valPO = String(rowData['No. PO/SPK']).trim();
                        let valInv = String(rowData['No. Invoice']).trim();
@@ -2019,13 +2015,18 @@
                                                (valLPJ !== '' && valLPJ !== '-'));
 
                        let calculatedStatus = 'NEW'; 
-                       if (isQuotFilled && !isAdvancedFilled) {
+                       if (isQuotFilled && isAdvancedFilled) {
+                           calculatedStatus = 'DEAL';
+                       } else if (isQuotFilled && !isAdvancedFilled) {
                            calculatedStatus = 'ON PROGRESS';
-                       } else if (isAdvancedFilled) {
+                       } else if (!isQuotFilled && !isAdvancedFilled) {
+                           calculatedStatus = 'NEW';
+                       } else if (!isQuotFilled && isAdvancedFilled) {
+                           // Fail-safe: Punya dokumen lanjut tapi quotation kosong = DEAL
                            calculatedStatus = 'DEAL';
                        }
 
-                       if (valStatusApp === 'CANCEL' || valStatusApp === 'NO DEAL') {
+                       if (valStatusApp.includes('CANCEL') || valStatusApp.includes('NO DEAL') || valStatusApp === 'LOSE') {
                            calculatedStatus = 'NO DEAL';
                        }
                        
