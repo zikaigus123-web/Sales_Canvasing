@@ -1442,8 +1442,7 @@
             document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
             // Penyesuaian total data filter keseluruhan
-            let isNoDateFilter = (dashFilterBulan === 'ALL' && !dashStartDate && !dashEndDate);
-            document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (isNoDateFilter ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
+            document.getElementById('kpiTotalDeal').innerText = countFiltered;
             
             document.getElementById('kpiTotalPending').innerText = dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered;
             
@@ -1464,7 +1463,7 @@
                 textBulanBanner = ` di bulan ${dashFilterBulan}`;
             }
 
-            let jumlahTeksBanner = dashFilterStatus === 'ALL' ? (isNoDateFilter ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
+            let jumlahTeksBanner = countFiltered;
             
             document.getElementById('dashStory').innerHTML = `Sistem Enterprise saat ini mengelola <strong>${jumlahTeksBanner} data projek terdaftar</strong>${textBulanBanner} dengan total <em>revenue</em> ${filterTextName} mencapai <strong>${formatRp(totalRev)}</strong>. Kekuatan *sales* terbesar saat ini berpusat pada klien <strong>${topClient}</strong>. Pastikan untuk terus meninjau pergerakan data projek (terutama yang ON PROGRESS) untuk menjaga efisiensi target korporat.`;
 
