@@ -265,17 +265,15 @@
             letter-spacing: 0.5px; 
         }
         
-        /* REVISI CSS UNTUK ANGKA SCORECARD AGAR SATU BARIS PENUH */
+        /* REVISI 1: Merubah white-space menjadi normal dan menggunakan word-break agar angka full terlihat */
         .kpi-value { 
-            font-size: clamp(0.8rem, 1.3vw, 2rem) !important; 
+            font-size: clamp(1rem, 1.5vw, 1.8rem); 
             font-weight: 800; 
             color: var(--sidebar-bg); 
             margin-top: 0.25rem; 
             line-height: 1.2; 
-            white-space: nowrap !important; 
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            word-break: keep-all !important;
+            white-space: normal; 
+            word-break: break-word;
         }
 
         /* Tables */
@@ -484,13 +482,12 @@
             flex-shrink: 0; 
         }
 
-        /* REVISI CSS FULLSCREEN TEXT KPI agar satu baris utuh */
+        /* REVISI 1: Text-wrapping pada kpi-value saat Fullscreen */
         :fullscreen #view-dashboard .kpi-value {
-            font-size: clamp(0.8rem, 1.2vw, 1.8rem) !important;
+            font-size: clamp(0.9rem, 1.2vw, 1.6rem);
             margin-top: 2px;
-            white-space: nowrap !important; 
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
+            white-space: normal; 
+            word-break: break-word;
         }
         
         :fullscreen #view-dashboard .chart-container {
@@ -624,6 +621,7 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
                         <h3 class="mb-0 fw-bold">Dashboard Sales Canvasing UT School</h3>
                         
+                        <!-- FITUR BARU: Penambahan Filter YTD & Filter Kurun Waktu -->
                         <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
                             <label class="form-label mb-0 small fw-bold text-muted d-none d-xl-block">Filter Tampilan:</label>
                             
@@ -1367,6 +1365,7 @@
                 let isPassedBulan = true;
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
+                // --- LOGIKA FILTER TANGGAL BARU ---
                 let rowDateStr = row['Tgl Dibuat'] || '';
                 let rowDate = new Date(rowDateStr);
 
@@ -1445,6 +1444,7 @@
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
             document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
+            // Penyesuaian total data filter keseluruhan
             let isNoDateFilter = (dashFilterBulan === 'ALL' && !dashStartDate && !dashEndDate);
             document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (isNoDateFilter ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
             
@@ -1457,6 +1457,7 @@
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'ADMIN';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
             
+            // Teks Banner dinamis
             let textBulanBanner = '';
             if (dashStartDate && dashEndDate) {
                 textBulanBanner = ` pada periode ${dashStartDate} hingga ${dashEndDate}`;
@@ -1493,20 +1494,7 @@
             // --- RENDER GRAFIK ---
             const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
             
-            // 1. Chart Klien (Doughnut)
             let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
-            
-            // Logika Warna Kuning UT Dinamis
-            let availableColors = ['#1A1A1A', '#3b82f6', '#718096', '#22c55e', '#ef4444', '#f97316'];
-            let dynamicClientColors = sortedClients.map(c => {
-                let upper = String(c).toUpperCase();
-                if(upper.includes("UNITED TRACTORS") || upper.includes("UT SCHOOL") || upper === "UT") {
-                    return '#FFC000'; 
-                } else {
-                    return availableColors.shift() || '#cbd5e1'; 
-                }
-            });
-
             if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
             chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
                 type: 'doughnut',
@@ -1514,7 +1502,7 @@
                     labels: sortedClients, 
                     datasets: [{ 
                         data: sortedClients.map(c => clients[c]), 
-                        backgroundColor: dynamicClientColors, 
+                        backgroundColor: utColors, 
                         borderWidth: 0 
                     }] 
                 },
@@ -1540,7 +1528,6 @@
                 }
             });
 
-            // 2. Chart Status (Bar)
             let sortedStatusKeys = ['DEAL', 'ON PROGRESS', 'NEW', 'NO DEAL'];
             let sortedStatusData = sortedStatusKeys.map(k => statusCounts[k]);
             if(chartInstances['chartStatus']) chartInstances['chartStatus'].destroy();
@@ -1576,7 +1563,6 @@
                 }
             });
 
-            // 3. Chart Jenis Projek (Pie)
             if(chartInstances['chartJenis']) chartInstances['chartJenis'].destroy();
             chartInstances['chartJenis'] = new Chart(document.getElementById('chartJenis').getContext('2d'), {
                 type: 'pie',
@@ -1610,7 +1596,6 @@
                 }
             });
 
-            // 3.5 Chart Distribusi Cancel (Pie)
             let sortedCancelKeys = Object.keys(cancelCounts).sort((a,b) => cancelCounts[b] - cancelCounts[a]).slice(0, 5);
             let sortedCancelData = sortedCancelKeys.map(k => cancelCounts[k]);
             
@@ -1662,98 +1647,29 @@
                 }
             });
 
-            // 4. Chart Garis Forecasting / Gap Analysis
-            let isDailyView = (dashFilterBulan !== 'ALL' && dashFilterBulan !== 'YTD' && !dashStartDate && !dashEndDate) || (dashStartDate && dashEndDate);
+            let trendLabels = arrMonths; 
             
-            let trendLabels = [];
-            let dataTrendDeal = [];
-            let dataTrendForecast = [];
-
-            if (isDailyView) {
-                let dateSet = new Set();
-                data.forEach(r => {
+            let dataTrendDeal = trendLabels.map(m => {
+                let sum = 0;
+                data.forEach(r => { 
+                    if((r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
+                        sum += parseAmount(r['amount']||r['Nilai']); 
+                    }
+                });
+                return sum;
+            });
+            
+            let dataTrendForecast = trendLabels.map(m => {
+                let sum = 0;
+                data.forEach(r => { 
                     let st = String(r['STATUS']||'').toUpperCase().trim();
                     if(st === 'PENDING') st = 'ON PROGRESS';
-                    let b = String(r['MONTH']||'-').toUpperCase().trim();
-                    let rowDateStr = r['Tgl Dibuat'] || '';
-                    
-                    let isPassedBulan = true;
-                    let rowDate = new Date(rowDateStr);
-
-                    if (dashStartDate && dashEndDate) {
-                        let start = new Date(dashStartDate); start.setHours(0,0,0,0);
-                        let end = new Date(dashEndDate); end.setHours(23,59,59,999);
-                        if (isNaN(rowDate.getTime()) || rowDate < start || rowDate > end) {
-                            isPassedBulan = false;
-                        }
-                    } else {
-                        if (dashFilterBulan !== 'ALL' && b !== dashFilterBulan) {
-                            isPassedBulan = false;
-                        }
-                    }
-
-                    if (isPassedBulan && rowDateStr !== '' && rowDateStr !== '-') {
-                        dateSet.add(rowDateStr);
+                    if((r['MONTH']||'-') === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
+                        sum += parseAmount(r['amount']||r['Nilai']); 
                     }
                 });
-                
-                let sortedDates = Array.from(dateSet).sort((a,b) => new Date(a) - new Date(b));
-                
-                dataTrendDeal = sortedDates.map(dateStr => {
-                    let sum = 0;
-                    data.forEach(r => {
-                        if (r['Tgl Dibuat'] === dateStr && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
-                            sum += parseAmount(r['amount']||r['Nilai']);
-                        }
-                    });
-                    return sum;
-                });
-
-                dataTrendForecast = sortedDates.map(dateStr => {
-                    let sum = 0;
-                    data.forEach(r => {
-                        let st = String(r['STATUS']||'').toUpperCase().trim();
-                        if(st === 'PENDING') st = 'ON PROGRESS';
-                        if (r['Tgl Dibuat'] === dateStr && (st === 'DEAL' || st === 'ON PROGRESS')) {
-                            sum += parseAmount(r['amount']||r['Nilai']);
-                        }
-                    });
-                    return sum;
-                });
-                
-                trendLabels = sortedDates.map(d => {
-                    let dateObj = new Date(d);
-                    if(isNaN(dateObj.getTime())) return d;
-                    let mNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-                    return dateObj.getDate() + ' ' + mNames[dateObj.getMonth()];
-                });
-
-            } else {
-                trendLabels = arrMonths;
-                dataTrendDeal = trendLabels.map(m => {
-                    let sum = 0;
-                    data.forEach(r => { 
-                        let b = String(r['MONTH']||'-').toUpperCase().trim();
-                        if(b === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
-                            sum += parseAmount(r['amount']||r['Nilai']); 
-                        }
-                    });
-                    return sum;
-                });
-                
-                dataTrendForecast = trendLabels.map(m => {
-                    let sum = 0;
-                    data.forEach(r => { 
-                        let b = String(r['MONTH']||'-').toUpperCase().trim();
-                        let st = String(r['STATUS']||'').toUpperCase().trim();
-                        if(st === 'PENDING') st = 'ON PROGRESS';
-                        if(b === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
-                            sum += parseAmount(r['amount']||r['Nilai']); 
-                        }
-                    });
-                    return sum;
-                });
-            }
+                return sum;
+            });
 
             if(chartInstances['chartTrend']) chartInstances['chartTrend'].destroy();
             
@@ -1808,7 +1724,6 @@
                 }
             });
 
-            // --- RENDER PETA LOKASI ---
             initAndPlotMap(cityCountsMap, cityRealNamesMap);
         }
 
@@ -2014,7 +1929,7 @@
             tbody.innerHTML = html || `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
         }
 
-        // --- MANAJEMEN EXCEL IMPORT / EXPORT ---
+        // --- MANAJEMEN EXCEL IMPORT / EXPORT (KOLOM LENGKAP & DINAMIS) ---
         function parseExcelDate(serial) { 
             if (typeof serial === 'number') return new Date((Math.floor(serial - 25569) * 86400) * 1000).toISOString().split('T')[0]; 
             if (typeof serial === 'string') { let d = new Date(serial); if(!isNaN(d.getTime())) return d.toISOString().split('T')[0]; } return serial; 
@@ -2067,8 +1982,7 @@
                            }
                        }
                        
-                       let rowData = { ...row };
-                       
+                       let rowData = {};
                        rowData['Tgl Dibuat'] = parsedDate;
                        rowData['Jenis'] = row['Jenis'] || existingRow['Jenis'] || '';
                        rowData['No. Projek'] = noStr;
