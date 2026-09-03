@@ -265,17 +265,15 @@
             letter-spacing: 0.5px; 
         }
         
-        /* REVISI CSS: Memaksa Angka Tampil Satu Baris Penuh Tanpa Titik-Titik (...) */
+        /* REVISI 1: Merubah white-space menjadi normal dan menggunakan word-break agar angka full terlihat */
         .kpi-value { 
-            font-size: clamp(12px, 1.4vw, 24px) !important; 
+            font-size: clamp(1rem, 1.5vw, 1.8rem); 
             font-weight: 800; 
             color: var(--sidebar-bg); 
             margin-top: 0.25rem; 
             line-height: 1.2; 
-            white-space: nowrap !important; 
-            overflow: visible !important;
-            text-overflow: clip !important;
-            letter-spacing: -0.5px;
+            white-space: normal; 
+            word-break: break-word;
         }
 
         /* Tables */
@@ -484,6 +482,14 @@
             flex-shrink: 0; 
         }
 
+        /* REVISI 1: Text-wrapping pada kpi-value saat Fullscreen */
+        :fullscreen #view-dashboard .kpi-value {
+            font-size: clamp(0.9rem, 1.2vw, 1.6rem);
+            margin-top: 2px;
+            white-space: normal; 
+            word-break: break-word;
+        }
+        
         :fullscreen #view-dashboard .chart-container {
             flex: 1 1 0 !important; 
             min-height: 0 !important;
@@ -615,6 +621,7 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
                         <h3 class="mb-0 fw-bold">Dashboard Sales Canvasing UT School</h3>
                         
+                        <!-- FITUR BARU: Penambahan Filter YTD & Filter Kurun Waktu -->
                         <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
                             <label class="form-label mb-0 small fw-bold text-muted d-none d-xl-block">Filter Tampilan:</label>
                             
@@ -1095,24 +1102,6 @@
             return null;
         }
 
-        function findVal(rowObj, possibleKeys) {
-            let keys = Object.keys(rowObj);
-            for (let pk of possibleKeys) {
-                let pkClean = pk.toLowerCase().replace(/[^a-z0-9]/g, '');
-                for (let k of keys) {
-                    let kClean = k.toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if (kClean === pkClean) return rowObj[k];
-                }
-            }
-            return undefined;
-        }
-
-        function isFilled(v) {
-            if(v === undefined || v === null) return false;
-            let s = String(v).trim().toLowerCase();
-            return s !== '' && s !== '-' && s !== 'na' && s !== 'n/a' && s !== 'undefined' && s !== 'null' && s !== '0' && s !== '#n/a';
-        }
-
         function kategorikanCancel(ket) {
             if(!ket || String(ket).trim() === '') return 'Tanpa Keterangan';
             let lowerKet = String(ket).toLowerCase();
@@ -1365,10 +1354,7 @@
 
             data.forEach(row => {
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
-                
-                if(status === 'PENDING') {
-                    status = 'ON PROGRESS'; 
-                }
+                if(status === 'PENDING') status = 'ON PROGRESS'; 
 
                 let amt = parseAmount(row['amount'] || row['Nilai']);
                 let clientName = row['Cust name'] || row['Customer'] || 'Unknown';
@@ -1379,6 +1365,7 @@
                 let isPassedBulan = true;
                 let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
+                // --- LOGIKA FILTER TANGGAL BARU ---
                 let rowDateStr = row['Tgl Dibuat'] || '';
                 let rowDate = new Date(rowDateStr);
 
@@ -1457,6 +1444,7 @@
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
             document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
+            // Penyesuaian total data filter keseluruhan
             let isNoDateFilter = (dashFilterBulan === 'ALL' && !dashStartDate && !dashEndDate);
             document.getElementById('kpiTotalDeal').innerText = dashFilterStatus === 'ALL' ? (isNoDateFilter ? data.length : countFiltered + countInProgressOverall + (statusCounts['NEW']||0) + (statusCounts['NO DEAL']||0) + (statusCounts['CANCEL']||0)) : countFiltered;
             
@@ -1469,6 +1457,7 @@
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'ADMIN';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
             
+            // Teks Banner dinamis
             let textBulanBanner = '';
             if (dashStartDate && dashEndDate) {
                 textBulanBanner = ` pada periode ${dashStartDate} hingga ${dashEndDate}`;
@@ -1506,17 +1495,6 @@
             const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
             
             let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
-            
-            let availableColors = ['#1A1A1A', '#3b82f6', '#718096', '#22c55e', '#ef4444', '#f97316'];
-            let dynamicClientColors = sortedClients.map(c => {
-                let upper = String(c).toUpperCase();
-                if(upper.includes("UNITED TRACTORS") || upper.includes("UT SCHOOL") || upper === "UT") {
-                    return '#FFC000'; 
-                } else {
-                    return availableColors.shift() || '#cbd5e1'; 
-                }
-            });
-
             if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
             chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
                 type: 'doughnut',
@@ -1524,7 +1502,7 @@
                     labels: sortedClients, 
                     datasets: [{ 
                         data: sortedClients.map(c => clients[c]), 
-                        backgroundColor: dynamicClientColors, 
+                        backgroundColor: utColors, 
                         borderWidth: 0 
                     }] 
                 },
@@ -1669,97 +1647,29 @@
                 }
             });
 
-            let isDailyView = (dashFilterBulan !== 'ALL' && dashFilterBulan !== 'YTD' && !dashStartDate && !dashEndDate) || (dashStartDate && dashEndDate);
+            let trendLabels = arrMonths; 
             
-            let trendLabels = [];
-            let dataTrendDeal = [];
-            let dataTrendForecast = [];
-
-            if (isDailyView) {
-                let dateSet = new Set();
-                data.forEach(r => {
+            let dataTrendDeal = trendLabels.map(m => {
+                let sum = 0;
+                data.forEach(r => { 
+                    if((r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
+                        sum += parseAmount(r['amount']||r['Nilai']); 
+                    }
+                });
+                return sum;
+            });
+            
+            let dataTrendForecast = trendLabels.map(m => {
+                let sum = 0;
+                data.forEach(r => { 
                     let st = String(r['STATUS']||'').toUpperCase().trim();
                     if(st === 'PENDING') st = 'ON PROGRESS';
-                    let b = String(r['MONTH']||'-').toUpperCase().trim();
-                    let rowDateStr = r['Tgl Dibuat'] || '';
-                    
-                    let isPassedBulan = true;
-                    let rowDate = new Date(rowDateStr);
-
-                    if (dashStartDate && dashEndDate) {
-                        let start = new Date(dashStartDate); start.setHours(0,0,0,0);
-                        let end = new Date(dashEndDate); end.setHours(23,59,59,999);
-                        if (isNaN(rowDate.getTime()) || rowDate < start || rowDate > end) {
-                            isPassedBulan = false;
-                        }
-                    } else {
-                        if (dashFilterBulan !== 'ALL' && b !== dashFilterBulan) {
-                            isPassedBulan = false;
-                        }
-                    }
-
-                    if (isPassedBulan && rowDateStr !== '' && rowDateStr !== '-') {
-                        dateSet.add(rowDateStr);
+                    if((r['MONTH']||'-') === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
+                        sum += parseAmount(r['amount']||r['Nilai']); 
                     }
                 });
-                
-                let sortedDates = Array.from(dateSet).sort((a,b) => new Date(a) - new Date(b));
-                
-                dataTrendDeal = sortedDates.map(dateStr => {
-                    let sum = 0;
-                    data.forEach(r => {
-                        if (r['Tgl Dibuat'] === dateStr && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
-                            sum += parseAmount(r['amount']||r['Nilai']);
-                        }
-                    });
-                    return sum;
-                });
-
-                dataTrendForecast = sortedDates.map(dateStr => {
-                    let sum = 0;
-                    data.forEach(r => {
-                        let st = String(r['STATUS']||'').toUpperCase().trim();
-                        if(st === 'PENDING') st = 'ON PROGRESS';
-                        if (r['Tgl Dibuat'] === dateStr && (st === 'DEAL' || st === 'ON PROGRESS')) {
-                            sum += parseAmount(r['amount']||r['Nilai']);
-                        }
-                    });
-                    return sum;
-                });
-                
-                trendLabels = sortedDates.map(d => {
-                    let dateObj = new Date(d);
-                    if(isNaN(dateObj.getTime())) return d;
-                    let mNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-                    return dateObj.getDate() + ' ' + mNames[dateObj.getMonth()];
-                });
-
-            } else {
-                trendLabels = arrMonths;
-                dataTrendDeal = trendLabels.map(m => {
-                    let sum = 0;
-                    data.forEach(r => { 
-                        let b = String(r['MONTH']||'-').toUpperCase().trim();
-                        if(b === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
-                            sum += parseAmount(r['amount']||r['Nilai']); 
-                        }
-                    });
-                    return sum;
-                });
-                
-                dataTrendForecast = trendLabels.map(m => {
-                    let sum = 0;
-                    data.forEach(r => { 
-                        let b = String(r['MONTH']||'-').toUpperCase().trim();
-                        let st = String(r['STATUS']||'').toUpperCase().trim();
-                        if(st === 'PENDING') st = 'ON PROGRESS';
-                        if(b === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
-                            sum += parseAmount(r['amount']||r['Nilai']); 
-                        }
-                    });
-                    return sum;
-                });
-            }
+                return sum;
+            });
 
             if(chartInstances['chartTrend']) chartInstances['chartTrend'].destroy();
             
@@ -2054,19 +1964,14 @@
                let added = 0; let updated = 0; let logDetails = [];
                 
                parsedData.forEach(row => { 
-                   if(row['No. Projek'] || findVal(row, ['No. Projek'])) { 
-                       let noStr = String(row['No. Projek'] || findVal(row, ['No. Projek'])).trim();
+                   if(row['No. Projek']) { 
+                       let noStr = String(row['No. Projek']).trim();
                        let existingIdx = dataDB.findIndex(x => String(x['No. Projek']) === noStr);
                        let existingRow = existingIdx > -1 ? dataDB[existingIdx] : {};
                        
-                       let rawTgl = findVal(row, ['Tgl Dibuat', 'Tanggal Dibuat', 'Tgl']);
-                       let parsedDate = rawTgl ? parseExcelDate(rawTgl) : (existingRow['Tgl Dibuat'] || '');
-                       
-                       let rawNilai = findVal(row, ['Nilai', 'Amount', 'Total Nilai']);
-                       let valNilai = rawNilai || existingRow['Nilai'] || existingRow['amount'] || 0;
-                       
-                       let rawCustomer = findVal(row, ['Customer', 'Cust name', 'Klien']);
-                       let valCustomer = rawCustomer || existingRow['Customer'] || existingRow['Cust name'] || '';
+                       let parsedDate = row['Tgl Dibuat'] ? parseExcelDate(row['Tgl Dibuat']) : (existingRow['Tgl Dibuat'] || '');
+                       let valNilai = row['Nilai'] || row['amount'] || existingRow['Nilai'] || 0;
+                       let valCustomer = row['Customer'] || row['Cust name'] || existingRow['Customer'] || '';
                        
                        let calculatedMonth = existingRow['MONTH'] || 'JAN';
                        if (parsedDate && parsedDate !== '-') {
@@ -2077,53 +1982,50 @@
                            }
                        }
                        
-                       let rowData = { ...existingRow, ...row };
-                       
+                       let rowData = {};
                        rowData['Tgl Dibuat'] = parsedDate;
+                       rowData['Jenis'] = row['Jenis'] || existingRow['Jenis'] || '';
                        rowData['No. Projek'] = noStr;
-                       rowData['Jenis'] = findVal(row, ['Jenis', 'Jenis Projek']) || existingRow['Jenis'] || '';
-                       rowData['Judul Projek'] = findVal(row, ['Judul Projek', 'Judul']) || existingRow['Judul Projek'] || '';
+                       rowData['Judul Projek'] = row['Judul Projek'] || existingRow['Judul Projek'] || '';
                        rowData['Customer'] = valCustomer;
-                       rowData['Cust name'] = valCustomer;
-                       rowData['PIC Customer'] = findVal(row, ['PIC Customer', 'PIC']) || existingRow['PIC Customer'] || '';
+                       rowData['PIC Customer'] = row['PIC Customer'] || existingRow['PIC Customer'] || '';
                        rowData['Nilai'] = valNilai;
+                       rowData['Status'] = row['Status'] || existingRow['Status'] || '';
+                       rowData['Tgl Approval'] = row['Tgl Approval'] || existingRow['Tgl Approval'] || '';
+                       rowData['Keterangan'] = row['Keterangan'] || existingRow['Keterangan'] || '';
+                       rowData['No. Proposal'] = row['No. Proposal'] || existingRow['No. Proposal'] || '';
+                       rowData['No. Quotation'] = row['No. Quotation'] || row['Quotation'] || existingRow['No. Quotation'] || '';
+                       rowData['No. PO/SPK'] = row['No. PO/SPK'] || row['PO/SPK'] || existingRow['No. PO/SPK'] || '';
+                       rowData['No. Invoice'] = row['No. Invoice'] || row['Invoice'] || existingRow['No. Invoice'] || '';
+                       rowData['No. BAST/P'] = row['No. BAST/P'] || row['BAST/P'] || existingRow['No. BAST/P'] || '';
+                       rowData['No. LPJ'] = row['No. LPJ'] || row['Dok. LPJ'] || existingRow['No. LPJ'] || '';
+                       rowData['Dibuat/Diteruskan Oleh'] = row['Dibuat/Diteruskan Oleh'] || existingRow['Dibuat/Diteruskan Oleh'] || '';
+                       rowData['Lokasi'] = row['Lokasi'] || existingRow['Lokasi'] || '';
                        rowData['amount'] = valNilai;
-                       rowData['Lokasi'] = findVal(row, ['Lokasi', 'Location']) || existingRow['Lokasi'] || '';
+                       rowData['MONTH'] = calculatedMonth;
+                       rowData['Cust name'] = valCustomer;
                        
-                       let rawQuot = findVal(row, ['No. Quotation', 'Quotation', 'No Quotation']);
-                       let rawPO = findVal(row, ['No. PO/SPK', 'PO/SPK', 'No PO SPK', 'No PO', 'PO']);
-                       let rawInv = findVal(row, ['No. Invoice', 'Invoice', 'No Invoice']);
-                       let rawBAST = findVal(row, ['No. BAST/P', 'BAST/P', 'No BAST P', 'BAST']);
-                       let rawLPJ = findVal(row, ['No. LPJ', 'Dok. LPJ', 'LPJ', 'No LPJ', 'Dok LPJ']);
-                       let rawStatusApp = findVal(row, ['Status']);
-                       let rawKeterangan = findVal(row, ['Keterangan']);
-                       
-                       let valQuot = rawQuot !== undefined ? rawQuot : (existingRow['No. Quotation'] || '');
-                       let valPO = rawPO !== undefined ? rawPO : (existingRow['No. PO/SPK'] || '');
-                       let valInv = rawInv !== undefined ? rawInv : (existingRow['No. Invoice'] || '');
-                       let valBAST = rawBAST !== undefined ? rawBAST : (existingRow['No. BAST/P'] || '');
-                       let valLPJ = rawLPJ !== undefined ? rawLPJ : (existingRow['No. LPJ'] || '');
-                       let valStatusAppStr = String(rawStatusApp !== undefined ? rawStatusApp : (existingRow['Status'] || '')).toUpperCase().trim();
-                       
-                       rowData['No. Quotation'] = valQuot;
-                       rowData['No. PO/SPK'] = valPO;
-                       rowData['No. Invoice'] = valInv;
-                       rowData['No. BAST/P'] = valBAST;
-                       rowData['No. LPJ'] = valLPJ;
-                       rowData['Status'] = rawStatusApp !== undefined ? rawStatusApp : (existingRow['Status'] || '');
-                       rowData['Keterangan'] = rawKeterangan !== undefined ? rawKeterangan : (existingRow['Keterangan'] || '');
-                       
-                       let isQuotFilled = isFilled(valQuot);
-                       let isAdvancedFilled = isFilled(valPO) || isFilled(valInv) || isFilled(valBAST) || isFilled(valLPJ);
+                       let valQuot = String(rowData['No. Quotation']).trim();
+                       let valPO = String(rowData['No. PO/SPK']).trim();
+                       let valInv = String(rowData['No. Invoice']).trim();
+                       let valBAST = String(rowData['No. BAST/P']).trim();
+                       let valLPJ = String(rowData['No. LPJ']).trim();
+                       let valStatusApp = String(rowData['Status']).toUpperCase().trim();
+
+                       let isQuotFilled = (valQuot !== '' && valQuot !== '-');
+                       let isAdvancedFilled = ((valPO !== '' && valPO !== '-') || 
+                                               (valInv !== '' && valInv !== '-') || 
+                                               (valBAST !== '' && valBAST !== '-') || 
+                                               (valLPJ !== '' && valLPJ !== '-'));
 
                        let calculatedStatus = 'NEW'; 
-                       if (isAdvancedFilled) {
-                           calculatedStatus = 'DEAL';
-                       } else if (isQuotFilled) {
+                       if (isQuotFilled && !isAdvancedFilled) {
                            calculatedStatus = 'ON PROGRESS';
+                       } else if (isAdvancedFilled) {
+                           calculatedStatus = 'DEAL';
                        }
 
-                       if (valStatusAppStr === 'CANCEL' || valStatusAppStr === 'NO DEAL') {
+                       if (valStatusApp === 'CANCEL' || valStatusApp === 'NO DEAL') {
                            calculatedStatus = 'NO DEAL';
                        }
                        
