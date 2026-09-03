@@ -265,15 +265,17 @@
             letter-spacing: 0.5px; 
         }
         
+        /* REVISI CSS: Memaksa Angka Tampil Satu Baris Penuh Tanpa Titik-Titik (...) */
         .kpi-value { 
-            font-size: clamp(1.2rem, 1.8vw, 2.2rem); 
+            font-size: clamp(12px, 1.4vw, 24px) !important; 
             font-weight: 800; 
             color: var(--sidebar-bg); 
             margin-top: 0.25rem; 
             line-height: 1.2; 
-            white-space: nowrap; 
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: nowrap !important; 
+            overflow: visible !important;
+            text-overflow: clip !important;
+            letter-spacing: -0.5px;
         }
 
         /* Tables */
@@ -482,14 +484,6 @@
             flex-shrink: 0; 
         }
 
-        :fullscreen #view-dashboard .kpi-value {
-            font-size: clamp(0.9rem, 1.2vw, 1.6rem);
-            margin-top: 2px;
-            white-space: nowrap !important; 
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-        }
-        
         :fullscreen #view-dashboard .chart-container {
             flex: 1 1 0 !important; 
             min-height: 0 !important;
@@ -1099,6 +1093,24 @@
                 }
             }
             return null;
+        }
+
+        function findVal(rowObj, possibleKeys) {
+            let keys = Object.keys(rowObj);
+            for (let pk of possibleKeys) {
+                let pkClean = pk.toLowerCase().replace(/[^a-z0-9]/g, '');
+                for (let k of keys) {
+                    let kClean = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (kClean === pkClean) return rowObj[k];
+                }
+            }
+            return undefined;
+        }
+
+        function isFilled(v) {
+            if(v === undefined || v === null) return false;
+            let s = String(v).trim().toLowerCase();
+            return s !== '' && s !== '-' && s !== 'na' && s !== 'n/a' && s !== 'undefined' && s !== 'null' && s !== '0' && s !== '#n/a';
         }
 
         function kategorikanCancel(ket) {
@@ -2007,7 +2019,7 @@
             tbody.innerHTML = html || `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
         }
 
-        // --- MANAJEMEN EXCEL IMPORT / EXPORT ---
+        // --- MANAJEMEN EXCEL IMPORT / EXPORT (KOLOM LENGKAP & DINAMIS) ---
         function parseExcelDate(serial) { 
             if (typeof serial === 'number') return new Date((Math.floor(serial - 25569) * 86400) * 1000).toISOString().split('T')[0]; 
             if (typeof serial === 'string') { let d = new Date(serial); if(!isNaN(d.getTime())) return d.toISOString().split('T')[0]; } return serial; 
@@ -2042,14 +2054,19 @@
                let added = 0; let updated = 0; let logDetails = [];
                 
                parsedData.forEach(row => { 
-                   if(row['No. Projek']) { 
-                       let noStr = String(row['No. Projek']).trim();
+                   if(row['No. Projek'] || findVal(row, ['No. Projek'])) { 
+                       let noStr = String(row['No. Projek'] || findVal(row, ['No. Projek'])).trim();
                        let existingIdx = dataDB.findIndex(x => String(x['No. Projek']) === noStr);
                        let existingRow = existingIdx > -1 ? dataDB[existingIdx] : {};
                        
-                       let parsedDate = row['Tgl Dibuat'] ? parseExcelDate(row['Tgl Dibuat']) : (existingRow['Tgl Dibuat'] || '');
-                       let valNilai = row['Nilai'] || row['amount'] || existingRow['Nilai'] || 0;
-                       let valCustomer = row['Customer'] || row['Cust name'] || existingRow['Customer'] || '';
+                       let rawTgl = findVal(row, ['Tgl Dibuat', 'Tanggal Dibuat', 'Tgl']);
+                       let parsedDate = rawTgl ? parseExcelDate(rawTgl) : (existingRow['Tgl Dibuat'] || '');
+                       
+                       let rawNilai = findVal(row, ['Nilai', 'Amount', 'Total Nilai']);
+                       let valNilai = rawNilai || existingRow['Nilai'] || existingRow['amount'] || 0;
+                       
+                       let rawCustomer = findVal(row, ['Customer', 'Cust name', 'Klien']);
+                       let valCustomer = rawCustomer || existingRow['Customer'] || existingRow['Cust name'] || '';
                        
                        let calculatedMonth = existingRow['MONTH'] || 'JAN';
                        if (parsedDate && parsedDate !== '-') {
@@ -2060,32 +2077,68 @@
                            }
                        }
                        
-                       let rowData = { ...row };
+                       let rowData = { ...existingRow, ...row };
                        
                        rowData['Tgl Dibuat'] = parsedDate;
                        rowData['No. Projek'] = noStr;
-                       rowData['MONTH'] = row['MONTH'] || row['Bulan'] || 'JAN';
-                       rowData['Judul Projek'] = row['Judul Projek'] || '';
-                       rowData['Jenis'] = row['Jenis'] || '';
-                       rowData['Cust name'] = row['Cust name'] || row['Customer'] || '';
-                       rowData['Customer'] = row['Customer'] || row['Cust name'] || '';
-                       rowData['Lokasi'] = row['Lokasi'] || '';
-                       rowData['amount'] = row['amount'] || row['Nilai'] || 0;
-                       rowData['Nilai'] = row['Nilai'] || row['amount'] || 0;
-                       rowData['Status'] = row['Status'] || '';
-                       rowData['STATUS'] = row['STATUS'] || 'ON PROGRESS';
-                       rowData['Keterangan'] = row['Keterangan'] || ''; 
+                       rowData['Jenis'] = findVal(row, ['Jenis', 'Jenis Projek']) || existingRow['Jenis'] || '';
+                       rowData['Judul Projek'] = findVal(row, ['Judul Projek', 'Judul']) || existingRow['Judul Projek'] || '';
+                       rowData['Customer'] = valCustomer;
+                       rowData['Cust name'] = valCustomer;
+                       rowData['PIC Customer'] = findVal(row, ['PIC Customer', 'PIC']) || existingRow['PIC Customer'] || '';
+                       rowData['Nilai'] = valNilai;
+                       rowData['amount'] = valNilai;
+                       rowData['Lokasi'] = findVal(row, ['Lokasi', 'Location']) || existingRow['Lokasi'] || '';
+                       
+                       let rawQuot = findVal(row, ['No. Quotation', 'Quotation', 'No Quotation']);
+                       let rawPO = findVal(row, ['No. PO/SPK', 'PO/SPK', 'No PO SPK', 'No PO', 'PO']);
+                       let rawInv = findVal(row, ['No. Invoice', 'Invoice', 'No Invoice']);
+                       let rawBAST = findVal(row, ['No. BAST/P', 'BAST/P', 'No BAST P', 'BAST']);
+                       let rawLPJ = findVal(row, ['No. LPJ', 'Dok. LPJ', 'LPJ', 'No LPJ', 'Dok LPJ']);
+                       let rawStatusApp = findVal(row, ['Status']);
+                       let rawKeterangan = findVal(row, ['Keterangan']);
+                       
+                       let valQuot = rawQuot !== undefined ? rawQuot : (existingRow['No. Quotation'] || '');
+                       let valPO = rawPO !== undefined ? rawPO : (existingRow['No. PO/SPK'] || '');
+                       let valInv = rawInv !== undefined ? rawInv : (existingRow['No. Invoice'] || '');
+                       let valBAST = rawBAST !== undefined ? rawBAST : (existingRow['No. BAST/P'] || '');
+                       let valLPJ = rawLPJ !== undefined ? rawLPJ : (existingRow['No. LPJ'] || '');
+                       let valStatusAppStr = String(rawStatusApp !== undefined ? rawStatusApp : (existingRow['Status'] || '')).toUpperCase().trim();
+                       
+                       rowData['No. Quotation'] = valQuot;
+                       rowData['No. PO/SPK'] = valPO;
+                       rowData['No. Invoice'] = valInv;
+                       rowData['No. BAST/P'] = valBAST;
+                       rowData['No. LPJ'] = valLPJ;
+                       rowData['Status'] = rawStatusApp !== undefined ? rawStatusApp : (existingRow['Status'] || '');
+                       rowData['Keterangan'] = rawKeterangan !== undefined ? rawKeterangan : (existingRow['Keterangan'] || '');
+                       
+                       let isQuotFilled = isFilled(valQuot);
+                       let isAdvancedFilled = isFilled(valPO) || isFilled(valInv) || isFilled(valBAST) || isFilled(valLPJ);
+
+                       let calculatedStatus = 'NEW'; 
+                       if (isAdvancedFilled) {
+                           calculatedStatus = 'DEAL';
+                       } else if (isQuotFilled) {
+                           calculatedStatus = 'ON PROGRESS';
+                       }
+
+                       if (valStatusAppStr === 'CANCEL' || valStatusAppStr === 'NO DEAL') {
+                           calculatedStatus = 'NO DEAL';
+                       }
+                       
+                       rowData['STATUS'] = calculatedStatus;
                        rowData['lastUpdatedBy'] = currentUser.username;
                        rowData['lastUpdatedAt'] = new Date().toISOString();
 
                        if (existingIdx > -1) { 
                            dataDB[existingIdx] = { ...dataDB[existingIdx], ...rowData }; 
                            updated++; 
-                           logDetails.push(`[UPDATE] No ${noStr} diperbarui dari Excel.`); 
+                           logDetails.push(`[UPDATE] No ${noStr} diperbarui dari Excel. (Auto-Status: ${calculatedStatus})`); 
                        } else { 
                            dataDB.push(rowData); 
                            added++; 
-                           logDetails.push(`[BARU] No ${noStr} ditambahkan dari Excel.`); 
+                           logDetails.push(`[BARU] No ${noStr} ditambahkan dari Excel. (Auto-Status: ${calculatedStatus})`); 
                        }
                    } 
                }); 
