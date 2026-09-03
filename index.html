@@ -687,14 +687,14 @@
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-dark">
                                         <div class="kpi-title">TOTAL PROJEK (FILTERED)</div>
                                         <div class="kpi-value" id="kpiTotalDeal">0</div>
-                                        <div class="small text-muted mt-2 fw-bold">Terdaftar di sistem</div>
+                                        <div class="small text-muted mt-2 fw-bold"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
                                         <div class="kpi-title" id="kpiTitlePending">PROJEK TERTUNDA (ON PROGRESS)</div>
                                         <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
-                                        <div class="small text-muted mt-2 fw-bold">Keseluruhan Menunggu</div>
+                                        <div class="small text-muted mt-2 fw-bold"></div>
                                     </div>
                                 </div>
                             </div>
@@ -703,7 +703,7 @@
                             <div class="row g-3 fs-chart-row mt-3">
                                 <div class="col-md-4">
                                     <div class="card-custom h-100 mb-0 d-flex flex-column">
-                                        <h6 class="fw-bold mb-3 text-dark text-center">Perbandingan Status</h6>
+                                        <h6 class="fw-bold mb-3 text-dark text-center">Project Comparison By Status</h6>
                                         <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                             <canvas id="chartStatus"></canvas>
                                         </div>
@@ -748,7 +748,7 @@
 
                             <!-- Distribusi Top Klien -->
                             <div class="card-custom mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark text-center">Distribusi Top Klien (Nilai)</h6>
+                                <h6 class="fw-bold mb-3 text-dark text-center">Top 5 Client</h6>
                                 <div class="chart-container" style="position: relative; flex: 1; min-height: 200px; width: 100%;">
                                     <canvas id="chartClient"></canvas>
                                 </div>
@@ -756,7 +756,7 @@
 
                             <!-- Tabel Matriks -->
                             <div class="card-custom flex-grow-1 mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark">Matriks Jumlah Projek (Terfilter)</h6>
+                                <h6 class="fw-bold mb-3 text-dark">Kontribusi Layanan per Bulan</h6>
                                 <div class="table-responsive">
                                     <table class="table table-hover table-bordered text-center align-middle mb-0" id="tblMatriksDashboard">
                                     </table>
@@ -1106,14 +1106,14 @@
             if(!ket || String(ket).trim() === '') return 'Tanpa Keterangan';
             let lowerKet = String(ket).toLowerCase();
             
-            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Perubahan Harga';
+            if(lowerKet.includes('harga') || lowerKet.includes('tidak masuk')) return 'Harga';
             if(lowerKet.includes('revisi')) return 'Revisi';
-            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Gunakan Quotation Lama';
-            if(lowerKet.includes('gabung') || lowerKet.includes('bersama') || lowerKet.includes('dijadikan 1')) return 'Digabung Event Lain';
+            if(lowerKet.includes('dl') || lowerKet.includes('lama') || lowerKet.includes('quotation')) return 'Requotation';
+            if(lowerKet.includes('gabung') || lowerKet.includes('bersama') || lowerKet.includes('dijadikan 1')) return 'Reschedule';
             if(lowerKet.includes('event') || lowerKet.includes('paket')) return 'Perubahan Paket Pelatihan';
             if(lowerKet.includes('double')) return 'Double Input';
             if(lowerKet.includes('perubahan nama') || lowerKet.includes('company') || lowerKet.includes('pt') || lowerKet.includes('customer')) return 'Perubahan Data Customer';
-            if(lowerKet.includes('jadwal')) return 'Perubahan Jadwal';
+            if(lowerKet.includes('jadwal')) return 'Reschedule';
             
             return 'Alasan Lainnya';
         }
@@ -1492,20 +1492,21 @@
             document.getElementById('tblMatriksDashboard').innerHTML = htmlMatriks + `</tbody>`;
 
             // --- RENDER GRAFIK ---
-            const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
+         const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
             
+            // 1. Chart Klien (Doughnut)
             let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
-            if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
-            chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
-                type: 'doughnut',
-                data: { 
-                    labels: sortedClients, 
-                    datasets: [{ 
-                        data: sortedClients.map(c => clients[c]), 
-                        backgroundColor: utColors, 
-                        borderWidth: 0 
-                    }] 
-                },
+            
+            // Logika Warna Kuning UT Dinamis
+            let availableColors = ['#1A1A1A', '#3b82f6', '#718096', '#22c55e', '#ef4444', '#f97316'];
+            let dynamicClientColors = sortedClients.map(c => {
+                let upper = String(c).toUpperCase();
+                if(upper.includes("UNITED TRACTORS") || upper.includes("UT SCHOOL") || upper === "UT") {
+                    return '#FFC000'; 
+                } else {
+                    return availableColors.shift() || '#cbd5e1'; 
+                }
+            });
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
