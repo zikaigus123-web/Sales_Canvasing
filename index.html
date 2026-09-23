@@ -1190,7 +1190,20 @@
             }
             
             if (newData.length > 0) {
-                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "upsert", sheetName: DB_MAP[key].sheet, keyField: keyField, data: newData }) });
+                // FIX: Chunk the payload to prevent Google Apps Script timeout on large imports
+                const chunkSize = 500;
+                for (let i = 0; i < newData.length; i += chunkSize) {
+                    let chunk = newData.slice(i, i + chunkSize);
+                    fetch(SCRIPT_URL, { 
+                        method: 'POST', 
+                        body: JSON.stringify({ 
+                            action: "upsert", 
+                            sheetName: DB_MAP[key].sheet, 
+                            keyField: keyField, 
+                            data: chunk 
+                        }) 
+                    });
+                }
             }
         }
 
