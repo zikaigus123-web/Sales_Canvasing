@@ -265,7 +265,6 @@
             letter-spacing: 0.5px; 
         }
         
-        /* REVISI 1: Merubah white-space menjadi normal dan menggunakan word-break agar angka full terlihat */
         .kpi-value { 
             font-size: clamp(1rem, 1.5vw, 1.8rem); 
             font-weight: 800; 
@@ -482,7 +481,6 @@
             flex-shrink: 0; 
         }
 
-        /* REVISI 1: Text-wrapping pada kpi-value saat Fullscreen */
         :fullscreen #view-dashboard .kpi-value {
             font-size: clamp(0.9rem, 1.2vw, 1.6rem);
             margin-top: 2px;
@@ -621,7 +619,6 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
                         <h3 class="mb-0 fw-bold">Dashboard Sales Canvasing UT School</h3>
                         
-                        <!-- FITUR BARU: Penambahan Filter YTD & Filter Kurun Waktu -->
                         <div class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
                             <label class="form-label mb-0 small fw-bold text-muted d-none d-xl-block">Filter Tampilan:</label>
                             
@@ -727,7 +724,7 @@
                                 </div>
                             </div>
 
-                            <!-- Peta Lokasi (Di bawah grafik Kiri) -->
+                            <!-- Peta Lokasi -->
                             <div class="card-custom flex-grow-1 mb-0 d-flex flex-column fs-map-card mt-3">
                                 <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-map-marker-alt text-danger me-2"></i>Peta Persebaran Lokasi Projek</h6>
                                 <div id="mapLokasi" style="height: 350px; width: 100%; border-radius: 8px; z-index: 1;"></div>
@@ -1044,7 +1041,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // Mendaftarkan plugin datalabels secara global untuk Chart.js
         Chart.register(ChartDataLabels);
 
         // ==========================================
@@ -1118,6 +1114,42 @@
             return 'Alasan Lainnya';
         }
 
+        // ==========================================
+        // SISTEM VALIDASI TANGGAL (TRUE DATE COMPARISON)
+        // ==========================================
+        function checkDateFilter(dateValue, filterStartDate, filterEndDate, filterBulan) {
+            if (!dateValue || dateValue === '-') {
+                return (!filterStartDate && filterBulan === 'ALL');
+            }
+            
+            let rowDateStr = String(dateValue).trim();
+            let rowDate = new Date(rowDateStr);
+
+            // Fallback for DD/MM/YYYY formatting issue
+            if (isNaN(rowDate.getTime())) {
+                 let parts = rowDateStr.split(/[-/ T]/);
+                 if (parts.length >= 3 && parts[0].length === 2) {
+                     rowDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                 }
+            }
+            
+            let isValidDate = !isNaN(rowDate.getTime());
+            if (!isValidDate) return false;
+
+            if (filterStartDate && filterEndDate) {
+                let start = new Date(filterStartDate);
+                start.setHours(0,0,0,0);
+                let end = new Date(filterEndDate);
+                end.setHours(23,59,59,999);
+                return rowDate >= start && rowDate <= end;
+            } else if (filterBulan === 'YTD') {
+                let currentYear = new Date().getFullYear();
+                let now = new Date();
+                return rowDate.getFullYear() === currentYear && rowDate <= now;
+            }
+            return true;
+        }
+
         // 2. INISIALISASI DATABASE & CACHING
         async function initDB() {
             const loginBtn = document.getElementById('btnLogin');
@@ -1164,7 +1196,6 @@
             return localDB[key] || []; 
         }
 
-        // ENGINE PENYIMPANAN LAMA (Hanya digunakan untuk USERS & LOGS)
         function saveDB(key, newData) {
             let oldData = localDB[key] || [];
             localDB[key] = newData; 
@@ -1206,17 +1237,14 @@
             }
         }
 
-        // ENGINE WIPE AND REPLACE KHUSUS SALES IMPORT (ANTI-MISSING ROWS)
         async function saveSalesDBWipeAndReplace(newData) {
             localDB[DB_KEY_SALES] = newData;
 
-            // 1. Wipe semua data beserta headernya di Google Sheet
             await fetch(SCRIPT_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ action: "deleteAll", sheetName: DB_MAP[DB_KEY_SALES].sheet }) 
             });
 
-            // 2. Insert data menggunakan chunk (Akan terinsert bulk secara instan)
             const chunkSize = 500;
             for (let i = 0; i < newData.length; i += chunkSize) {
                 let chunk = newData.slice(i, i + chunkSize);
@@ -1358,7 +1386,6 @@
         // --- DASHBOARD ANALYTICS ---
         function parseAmount(val) {
             if(!val) return 0;
-            // FITUR BARU: Jika tipe data sudah number (dibaca Excel), langsung kembalikan agar tidak terpotong separator
             if(typeof val === 'number') return Math.round(val);
             let str = String(val).replace(/[^0-9,-]+/g,"").replace(/\./g, "").replace(/,/g, ""); 
             return parseInt(str) || 0;
@@ -1401,29 +1428,17 @@
                 let jenis = row['Jenis'] || 'Lainnya';
                 let lokasiRaw = (row['Lokasi'] || '').trim();
 
+                // Applying the precise Date logic function
                 let isPassedBulan = true;
-                let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
-
-                // --- REVISI: Logika filter kebal timezone (menggunakan string comparison yyyy-mm-dd) ---
-                let rowDateStr = (row['Tgl Dibuat'] || '').toString().trim();
-                if (rowDateStr.length >= 10) rowDateStr = rowDateStr.substring(0, 10);
-
-                if (dashStartDate && dashEndDate) {
-                    if (!rowDateStr || rowDateStr < dashStartDate || rowDateStr > dashEndDate) {
+                if ((dashStartDate && dashEndDate) || dashFilterBulan === 'YTD') {
+                    isPassedBulan = checkDateFilter(row['Tgl Dibuat'], dashStartDate, dashEndDate, dashFilterBulan);
+                } else if (dashFilterBulan !== 'ALL') {
+                    if (bulan !== dashFilterBulan) {
                         isPassedBulan = false;
                     }
-                } else {
-                    if (dashFilterBulan === 'YTD') {
-                        let currentYear = new Date().getFullYear();
-                        if (!rowDateStr || !rowDateStr.startsWith(currentYear.toString())) {
-                            isPassedBulan = false;
-                        }
-                    } else if (dashFilterBulan !== 'ALL') {
-                        if (bulan !== dashFilterBulan) {
-                            isPassedBulan = false;
-                        }
-                    }
                 }
+
+                let isPassedStatus = (dashFilterStatus === 'ALL' || status === dashFilterStatus);
 
                 if(isPassedBulan) {
                     if(statusCounts[status] !== undefined) statusCounts[status]++;
@@ -1478,9 +1493,7 @@
             document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
             document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
             
-            // Penyesuaian total data filter keseluruhan
             document.getElementById('kpiTotalDeal').innerText = countFiltered;
-            
             document.getElementById('kpiTotalPending').innerText = dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered;
             
             let dealPct = totalAmountFiltered === 0 ? "0" : ((totalRev / totalAmountFiltered) * 100).toFixed(1);
@@ -1490,7 +1503,6 @@
             let usernameDisplay = currentUser ? currentUser.username.toUpperCase() : 'ADMIN';
             document.getElementById('dashGreeting').innerText = `Halo, ${usernameDisplay}.`;
             
-            // Teks Banner dinamis
             let textBulanBanner = '';
             if (dashStartDate && dashEndDate) {
                 textBulanBanner = ` pada periode ${dashStartDate} hingga ${dashEndDate}`;
@@ -1682,10 +1694,15 @@
 
             let trendLabels = arrMonths; 
             
+            // Ensuring Trendline strictly follows the Date filter by applying the identical logic inside the graph generation loop
             let dataTrendDeal = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
-                    if((r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
+                    let isPassedBulanFilter = true;
+                    if ((dashStartDate && dashEndDate) || dashFilterBulan === 'YTD') {
+                        isPassedBulanFilter = checkDateFilter(r['Tgl Dibuat'], dashStartDate, dashEndDate, dashFilterBulan);
+                    }
+                    if(isPassedBulanFilter && (r['MONTH']||'-') === m && String(r['STATUS']||'').toUpperCase().trim() === 'DEAL') {
                         sum += parseAmount(r['amount']||r['Nilai']); 
                     }
                 });
@@ -1695,9 +1712,13 @@
             let dataTrendForecast = trendLabels.map(m => {
                 let sum = 0;
                 data.forEach(r => { 
+                    let isPassedBulanFilter = true;
+                    if ((dashStartDate && dashEndDate) || dashFilterBulan === 'YTD') {
+                        isPassedBulanFilter = checkDateFilter(r['Tgl Dibuat'], dashStartDate, dashEndDate, dashFilterBulan);
+                    }
                     let st = String(r['STATUS']||'').toUpperCase().trim();
                     if(st === 'PENDING') st = 'ON PROGRESS';
-                    if((r['MONTH']||'-') === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
+                    if(isPassedBulanFilter && (r['MONTH']||'-') === m && (st === 'DEAL' || st === 'ON PROGRESS')) {
                         sum += parseAmount(r['amount']||r['Nilai']); 
                     }
                 });
@@ -1776,29 +1797,15 @@
 
                 let filtered = data.filter(row => {
                     let status = String(row['STATUS'] || '').toUpperCase().trim();
-                    let bulan = String(row['MONTH'] || '-').toUpperCase().trim();
                     let ketRaw = row['Keterangan'] || row['keterangan'] || '';
+                    let bulan = String(row['MONTH'] || '-').toUpperCase().trim();
                     
                     let isPassedBulan = true;
-
-                    // --- REVISI: Logika filter kebal timezone (menggunakan string comparison yyyy-mm-dd) ---
-                    let rowDateStr = (row['Tgl Dibuat'] || '').toString().trim();
-                    if (rowDateStr.length >= 10) rowDateStr = rowDateStr.substring(0, 10);
-
-                    if (dashStartDate && dashEndDate) {
-                        if (!rowDateStr || rowDateStr < dashStartDate || rowDateStr > dashEndDate) {
+                    if ((dashStartDate && dashEndDate) || dashFilterBulan === 'YTD') {
+                        isPassedBulan = checkDateFilter(row['Tgl Dibuat'], dashStartDate, dashEndDate, dashFilterBulan);
+                    } else if (dashFilterBulan !== 'ALL') {
+                        if (bulan !== dashFilterBulan) {
                             isPassedBulan = false;
-                        }
-                    } else {
-                        if (dashFilterBulan === 'YTD') {
-                            let currentYear = new Date().getFullYear();
-                            if (!rowDateStr || !rowDateStr.startsWith(currentYear.toString())) {
-                                isPassedBulan = false;
-                            }
-                        } else if (dashFilterBulan !== 'ALL') {
-                            if (bulan !== dashFilterBulan) {
-                                isPassedBulan = false;
-                            }
                         }
                     }
                     
@@ -2002,7 +2009,6 @@
                parsedData.forEach(row => { 
                    if(row['No. Projek']) { 
                        let parsedDate = row['Tgl Dibuat'] ? parseExcelDate(row['Tgl Dibuat']) : '';
-                       // Proteksi angka nol (0) agar tidak dibaca kosong/false
                        let valNilai = row['Nilai'] !== undefined ? row['Nilai'] : (row['amount'] !== undefined ? row['amount'] : 0);
                        let valCustomer = row['Customer'] || row['Cust name'] || '';
                        
@@ -2015,7 +2021,6 @@
                            }
                        }
                        
-                       // Penentuan Status Otomatis
                        let valQuot = String(row['No. Quotation'] || row['Quotation'] || '').trim();
                        let valPO = String(row['No. PO/SPK'] || row['PO/SPK'] || '').trim();
                        let valInv = String(row['No. Invoice'] || row['Invoice'] || '').trim();
@@ -2044,7 +2049,6 @@
                            calculatedStatus = 'NO DEAL';
                        }
 
-                       // Menggabungkan Data Mentah Excel dengan Kolom Custom
                        let rowData = { ...row };
                        
                        rowData['Tgl Dibuat'] = parsedDate;
@@ -2053,7 +2057,6 @@
                        rowData['Cust name'] = valCustomer;
                        rowData['STATUS'] = calculatedStatus;
                        
-                       // Memastikan kolom Aging selalu ada
                        if (!('Aging' in rowData)) rowData['Aging'] = '';
                        if (!('Aging (days)' in rowData)) rowData['Aging (days)'] = '';
                        
@@ -2065,7 +2068,6 @@
                    } 
                }); 
                
-               // Eksekusi Wipe and Replace
                await saveSalesDBWipeAndReplace(dataDB); 
                
                addLog('Import Data (Wipe & Replace)', `Menyelaraskan ${added} data (Timpa Semua).`, 'Seluruh database lama diganti penuh dengan data Excel terbaru dengan pembaruan status otomatis.');
