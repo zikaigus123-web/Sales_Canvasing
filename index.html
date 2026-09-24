@@ -776,7 +776,7 @@
                             <button class="btn btn-outline-info fw-bold edit-allowed" onclick="window.open('https://docs.google.com/spreadsheets/d/1kL3DUrkRsi1ItPYqfkFbkBQ6j1cRuNGcclUxbhKNF0g/edit?usp=sharing', '_blank')"><i class="fas fa-external-link-alt me-2"></i>Buka Spreadsheet</button>
                             <button class="btn btn-light border fw-bold edit-allowed" onclick="downloadTemplate()"><i class="fas fa-file-excel me-2 text-success"></i>Template</button>
                             
-                            <button class="btn btn-outline-secondary edit-allowed fw-bold" onclick="document.getElementById('importExcelInput').click()"><i class="fas fa-upload me-2"></i>Import Data</button>
+                            <button class="btn btn-outline-secondary edit-allowed fw-bold" onclick="document.getElementById('importExcelInput').click()"><i class="fas fa-upload me-2"></i>Wipe & Import Data</button>
                             <input type="file" id="importExcelInput" class="d-none" accept=".xlsx, .xls" onchange="handleImportExcel(event)">
                         </div>
                     </div>
@@ -1050,7 +1050,7 @@
         // ==========================================
         // KONFIGURASI DATABASE GOOGLE SHEETS
         // ==========================================
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwC3_D3qbbul8UT4RyhPWqWYac16X2zXgCxocyv5lz5FaDW_SO5eiien5kLRmnXPEIAzg/exec'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgL7dXrSFmRzq0cVIQnjByb7ym4Q6em2RGqiLgxkNpEmXeWveTw4qs4GsPH9ioFBpUqw/exec'; 
 
         const DB_KEY_SALES = 'sales_data';
         const DB_KEY_USR   = 'sales_users';
@@ -1164,7 +1164,7 @@
             return localDB[key] || []; 
         }
 
-        // ENGINE PENYIMPANAN CERDAS
+        // ENGINE PENYIMPANAN LAMA (Hanya digunakan untuk USERS & LOGS)
         function saveDB(key, newData) {
             let oldData = localDB[key] || [];
             localDB[key] = newData; 
@@ -1190,7 +1190,6 @@
             }
             
             if (newData.length > 0) {
-                // FIX: Chunk the payload to prevent Google Apps Script timeout on large imports
                 const chunkSize = 500;
                 for (let i = 0; i < newData.length; i += chunkSize) {
                     let chunk = newData.slice(i, i + chunkSize);
@@ -1204,6 +1203,31 @@
                         }) 
                     });
                 }
+            }
+        }
+
+        // ENGINE WIPE AND REPLACE KHUSUS SALES IMPORT (ANTI-MISSING ROWS)
+        async function saveSalesDBWipeAndReplace(newData) {
+            localDB[DB_KEY_SALES] = newData;
+
+            // 1. Wipe semua data beserta headernya di Google Sheet
+            await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: "deleteAll", sheetName: DB_MAP[DB_KEY_SALES].sheet }) 
+            });
+
+            // 2. Insert data menggunakan chunk (Akan terinsert bulk secara instan)
+            const chunkSize = 500;
+            for (let i = 0; i < newData.length; i += chunkSize) {
+                let chunk = newData.slice(i, i + chunkSize);
+                await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        action: "insertData", 
+                        sheetName: DB_MAP[DB_KEY_SALES].sheet, 
+                        data: chunk 
+                    }) 
+                });
             }
         }
 
@@ -1936,7 +1960,7 @@
             tbody.innerHTML = html || `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
         }
 
-        // --- MANAJEMEN EXCEL IMPORT / EXPORT (KOLOM LENGKAP & DINAMIS) ---
+        // --- MANAJEMEN EXCEL IMPORT (WIPE & REPLACE DINAMIS) ---
         function parseExcelDate(serial) { 
             if (typeof serial === 'number') return new Date((Math.floor(serial - 25569) * 86400) * 1000).toISOString().split('T')[0]; 
             if (typeof serial === 'string') { let d = new Date(serial); if(!isNaN(d.getTime())) return d.toISOString().split('T')[0]; } return serial; 
@@ -1949,7 +1973,7 @@
                 'PIC Customer', 'Nilai', 'Status', 'Tgl Approval', 'Keterangan', 
                 'No. Proposal', 'No. Quotation', 'No. PO/SPK', 'No. Invoice', 'No. BAST/P', 
                 'No. LPJ', 'Dibuat/Diteruskan Oleh', 'Lokasi', 'amount', 'MONTH', 
-                'Cust name', 'STATUS'
+                'Cust name', 'STATUS', 'Aging', 'Aging (days)'
             ];
             
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([templateHeaders]), "Data_Sales"); 
@@ -1959,28 +1983,30 @@
 
         function handleImportExcel(e) {
             const file = e.target.files[0]; if(!file) return;
-            Swal.fire({ title: 'Membaca File...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => { Swal.showLoading() } });
+            Swal.fire({ 
+                title: 'Menyelaraskan Database...', 
+                html: 'Sistem sedang membersihkan data lama dan memasukkan data baru secara instan.<br><br><b>Mohon jangan tutup halaman ini.</b>', 
+                allowOutsideClick: false, 
+                showConfirmButton: false, 
+                didOpen: () => { Swal.showLoading() } 
+            });
             
             const r = new FileReader(); 
-            r.onload = (evt) => { 
-               Swal.close();
+            r.onload = async (evt) => { 
                let rawData = XLSX.read(evt.target.result, {type:'binary'});
                let parsedData = XLSX.utils.sheet_to_json(rawData.Sheets[rawData.SheetNames[0]]);
                
-               let dataDB = getDB(DB_KEY_SALES); 
-               let added = 0; let updated = 0; let logDetails = [];
+               let dataDB = []; 
+               let added = 0; 
                 
                parsedData.forEach(row => { 
                    if(row['No. Projek']) { 
-                       let noStr = String(row['No. Projek']).trim();
-                       let existingIdx = dataDB.findIndex(x => String(x['No. Projek']) === noStr);
-                       let existingRow = existingIdx > -1 ? dataDB[existingIdx] : {};
+                       let parsedDate = row['Tgl Dibuat'] ? parseExcelDate(row['Tgl Dibuat']) : '';
+                       // Proteksi angka nol (0) agar tidak dibaca kosong/false
+                       let valNilai = row['Nilai'] !== undefined ? row['Nilai'] : (row['amount'] !== undefined ? row['amount'] : 0);
+                       let valCustomer = row['Customer'] || row['Cust name'] || '';
                        
-                       let parsedDate = row['Tgl Dibuat'] ? parseExcelDate(row['Tgl Dibuat']) : (existingRow['Tgl Dibuat'] || '');
-                       let valNilai = row['Nilai'] || row['amount'] || existingRow['Nilai'] || 0;
-                       let valCustomer = row['Customer'] || row['Cust name'] || existingRow['Customer'] || '';
-                       
-                       let calculatedMonth = existingRow['MONTH'] || 'JAN';
+                       let calculatedMonth = 'JAN';
                        if (parsedDate && parsedDate !== '-') {
                            let d = new Date(parsedDate);
                            if (!isNaN(d.getTime())) {
@@ -1989,36 +2015,13 @@
                            }
                        }
                        
-                       let rowData = {};
-                       rowData['Tgl Dibuat'] = parsedDate;
-                       rowData['Jenis'] = row['Jenis'] || existingRow['Jenis'] || '';
-                       rowData['No. Projek'] = noStr;
-                       rowData['Judul Projek'] = row['Judul Projek'] || existingRow['Judul Projek'] || '';
-                       rowData['Customer'] = valCustomer;
-                       rowData['PIC Customer'] = row['PIC Customer'] || existingRow['PIC Customer'] || '';
-                       rowData['Nilai'] = valNilai;
-                       rowData['Status'] = row['Status'] || existingRow['Status'] || '';
-                       rowData['Tgl Approval'] = row['Tgl Approval'] || existingRow['Tgl Approval'] || '';
-                       rowData['Keterangan'] = row['Keterangan'] || existingRow['Keterangan'] || '';
-                       rowData['No. Proposal'] = row['No. Proposal'] || existingRow['No. Proposal'] || '';
-                       rowData['No. Quotation'] = row['No. Quotation'] || row['Quotation'] || existingRow['No. Quotation'] || '';
-                       rowData['No. PO/SPK'] = row['No. PO/SPK'] || row['PO/SPK'] || existingRow['No. PO/SPK'] || '';
-                       rowData['No. Invoice'] = row['No. Invoice'] || row['Invoice'] || existingRow['No. Invoice'] || '';
-                       rowData['No. BAST/P'] = row['No. BAST/P'] || row['BAST/P'] || existingRow['No. BAST/P'] || '';
-                       rowData['No. LPJ'] = row['No. LPJ'] || row['Dok. LPJ'] || existingRow['No. LPJ'] || '';
-                       rowData['Dibuat/Diteruskan Oleh'] = row['Dibuat/Diteruskan Oleh'] || existingRow['Dibuat/Diteruskan Oleh'] || '';
-                       rowData['Lokasi'] = row['Lokasi'] || existingRow['Lokasi'] || '';
-                       rowData['amount'] = valNilai;
-                       rowData['MONTH'] = calculatedMonth;
-                       rowData['Cust name'] = valCustomer;
-                       
-                       // --- REVISI: Logika Status Sesuai Ketentuan Baru ---
-                       let valQuot = String(rowData['No. Quotation']).trim();
-                       let valPO = String(rowData['No. PO/SPK']).trim();
-                       let valInv = String(rowData['No. Invoice']).trim();
-                       let valBAST = String(rowData['No. BAST/P']).trim();
-                       let valLPJ = String(rowData['No. LPJ']).trim();
-                       let valStatusApp = String(rowData['Status']).toUpperCase().trim();
+                       // Penentuan Status Otomatis
+                       let valQuot = String(row['No. Quotation'] || row['Quotation'] || '').trim();
+                       let valPO = String(row['No. PO/SPK'] || row['PO/SPK'] || '').trim();
+                       let valInv = String(row['No. Invoice'] || row['Invoice'] || '').trim();
+                       let valBAST = String(row['No. BAST/P'] || row['BAST/P'] || '').trim();
+                       let valLPJ = String(row['No. LPJ'] || row['Dok. LPJ'] || '').trim();
+                       let valStatusApp = String(row['Status'] || '').toUpperCase().trim();
 
                        let isQuotFilled = (valQuot !== '' && valQuot !== '-');
                        let isAdvancedFilled = ((valPO !== '' && valPO !== '-') || 
@@ -2034,36 +2037,42 @@
                        } else if (!isQuotFilled && !isAdvancedFilled) {
                            calculatedStatus = 'NEW';
                        } else if (!isQuotFilled && isAdvancedFilled) {
-                           // Fail-safe: Punya dokumen lanjut tapi quotation kosong = DEAL
                            calculatedStatus = 'DEAL';
                        }
 
                        if (valStatusApp.includes('CANCEL') || valStatusApp.includes('NO DEAL') || valStatusApp === 'LOSE') {
                            calculatedStatus = 'NO DEAL';
                        }
+
+                       // Menggabungkan Data Mentah Excel dengan Kolom Custom
+                       let rowData = { ...row };
                        
+                       rowData['Tgl Dibuat'] = parsedDate;
+                       rowData['amount'] = valNilai;
+                       rowData['MONTH'] = calculatedMonth;
+                       rowData['Cust name'] = valCustomer;
                        rowData['STATUS'] = calculatedStatus;
+                       
+                       // Memastikan kolom Aging selalu ada
+                       if (!('Aging' in rowData)) rowData['Aging'] = '';
+                       if (!('Aging (days)' in rowData)) rowData['Aging (days)'] = '';
+                       
                        rowData['lastUpdatedBy'] = currentUser.username;
                        rowData['lastUpdatedAt'] = new Date().toISOString();
 
-                       if (existingIdx > -1) { 
-                           dataDB[existingIdx] = { ...dataDB[existingIdx], ...rowData }; 
-                           updated++; 
-                           logDetails.push(`[UPDATE] No ${noStr} diperbarui dari Excel. (Auto-Status: ${calculatedStatus})`); 
-                       } else { 
-                           dataDB.push(rowData); 
-                           added++; 
-                           logDetails.push(`[BARU] No ${noStr} ditambahkan dari Excel. (Auto-Status: ${calculatedStatus})`); 
-                       }
+                       dataDB.push(rowData); 
+                       added++; 
                    } 
                }); 
                
-               saveDB(DB_KEY_SALES, dataDB); 
-               let finalDetailText = logDetails.length > 0 ? logDetails.join('\n') : 'Sistem mengeksekusi import kosong.';
-               addLog('Import Data', `Import Excel: ${added} baru, ${updated} update.`, finalDetailText);
+               // Eksekusi Wipe and Replace
+               await saveSalesDBWipeAndReplace(dataDB); 
+               
+               addLog('Import Data (Wipe & Replace)', `Menyelaraskan ${added} data (Timpa Semua).`, 'Seluruh database lama diganti penuh dengan data Excel terbaru dengan pembaruan status otomatis.');
                
                renderSalesTable(); 
-               Swal.fire('Import Selesai', `${added} data ditambahkan, ${updated} diperbarui.`, 'success'); 
+               Swal.close();
+               Swal.fire('Penyelarasan Selesai', `Sebanyak ${added} data projek berhasil dipulihkan secara penuh tanpa masalah.`, 'success'); 
                e.target.value = ''; 
             }; 
             r.readAsBinaryString(file);
