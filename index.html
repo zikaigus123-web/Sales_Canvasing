@@ -24,6 +24,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <!-- Supabase JS client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <!-- SheetJS (Excel) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     
@@ -507,6 +510,48 @@
             border-radius: 6px;
         }
         
+
+        /* ===== FULLSCREEN: perbaikan layout (kartu Aging + tinggi minimum + lebar kolom) ===== */
+        :fullscreen #view-dashboard { overflow-x: hidden !important; }
+        :fullscreen #view-dashboard .col-left,
+        :fullscreen #view-dashboard .col-right { min-width: 0 !important; }
+        :fullscreen #view-dashboard .fs-chart-row { min-height: 230px !important; }
+        :fullscreen #view-dashboard .fs-map-card { min-height: 280px !important; margin-top: 0 !important; }
+        :fullscreen #view-dashboard #cardAging {
+            flex: 0 0 auto !important;
+            height: auto !important;
+            margin-top: 0 !important;
+            padding: 10px 15px !important;
+        }
+        :fullscreen #view-dashboard #cardAging .loc-kpi { padding: .5rem .5rem; border-bottom-width: 3px; }
+        :fullscreen #view-dashboard #cardAging .loc-kpi .kpi-value { font-size: 1.3rem; }
+        :fullscreen #view-dashboard #cardAging .aging-rec-text,
+        :fullscreen #view-dashboard #cardAging .aging-reco { display: none !important; }
+        :fullscreen #view-dashboard .fs-chart-row .card-custom,
+        :fullscreen #view-dashboard .fs-map-card { overflow: hidden; }
+        /* Hover UX: kartu chart & sel matriks */
+        #view-dashboard .card-custom { transition: box-shadow .2s ease; }
+        #view-dashboard .card-custom:hover { box-shadow: 0 10px 22px rgba(0,0,0,.08); }
+        #tblMatriksDashboard tbody td:not(:first-child) { transition: background-color .15s ease; }
+        #tblMatriksDashboard tbody td:not(:first-child):hover { background-color: #fff3cd !important; cursor: default; }
+        .kpi-clickable { cursor: pointer; }
+        .kpi-clickable:hover { box-shadow: 0 10px 18px rgba(0,0,0,.12) !important; }
+        .aging-tile { transition: box-shadow .2s ease; }
+        .aging-tile:hover { box-shadow: 0 8px 16px rgba(0,0,0,.10); }
+
+        /* Kolom "Jenis Projek" di matriks dibekukan saat scroll horizontal */
+        #tblMatriksDashboard { border-collapse: separate; border-spacing: 0; }
+        #tblMatriksDashboard th:first-child,
+        #tblMatriksDashboard td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            min-width: 130px;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.12);
+        }
+        #tblMatriksDashboard thead th:first-child { background-color: #212529; color: #fff; z-index: 3; }
+        #tblMatriksDashboard tbody td:first-child { background-color: #fff; }
+
         :fullscreen #view-dashboard .table-responsive {
             flex: 1 1 0 !important;
             min-height: 0 !important;
@@ -517,6 +562,86 @@
         :fullscreen #view-dashboard .table-custom td {
             padding: 4px 8px;
             font-size: 0.75rem;
+        }
+    
+        /* =====================================================
+           MOTION & TRANSITIONS
+           ===================================================== */
+        :root {
+            --ease-out: cubic-bezier(.2, .8, .2, 1);
+            --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        /* Login <-> aplikasi */
+        .login-wrapper { transition: opacity .38s ease, transform .38s var(--ease-out); }
+        .login-wrapper.leaving { opacity: 0; pointer-events: none; }
+        #appContainer.app-enter { animation: appEnter .5s ease backwards; }
+        #appContainer.app-leave { opacity: 0; transition: opacity .35s ease; pointer-events: none; }
+        @keyframes appEnter { from { opacity: 0; } to { opacity: 1; } }
+        .login-card.shake { animation: loginShake .5s cubic-bezier(.36, .07, .19, .97) both; }
+        @keyframes loginShake {
+            10%, 90% { transform: translateX(-2px); }
+            20%, 80% { transform: translateX(4px); }
+            30%, 50%, 70% { transform: translateX(-7px); }
+            40%, 60% { transform: translateX(7px); }
+        }
+
+        /* Data berubah (filter, toggle matriks, dll) */
+        .soft-refresh { animation: softRefresh .45s var(--ease-out) both; }
+        @keyframes softRefresh { from { opacity: .25; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .kpi-bump { animation: kpiBump .55s var(--ease-spring); }
+        @keyframes kpiBump { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
+        .fs-kpi-row .card-custom:hover { transform: translateY(-3px); }
+
+        /* Tombol */
+        .btn { transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease, transform .15s var(--ease-out); }
+        .btn:active:not(:disabled) { transform: scale(.97); }
+        .btn-primary:hover:not(:disabled) { box-shadow: 0 6px 14px rgba(255, 192, 0, .35); }
+
+        /* Modal Bootstrap */
+        .modal.fade .modal-dialog { transform: translateY(24px) scale(.95); opacity: 0; transition: transform .38s var(--ease-spring), opacity .28s ease; }
+        .modal.show .modal-dialog { transform: none; opacity: 1; }
+        .modal-backdrop { transition: opacity .3s ease !important; }
+
+        /* Popup SweetAlert (respon sistem) */
+        @keyframes swalPopIn {
+            0% { opacity: 0; transform: translateY(22px) scale(.9); }
+            65% { opacity: 1; transform: translateY(-4px) scale(1.02); }
+            100% { opacity: 1; transform: none; }
+        }
+        @keyframes swalPopOut { to { opacity: 0; transform: translateY(12px) scale(.94); } }
+        .swal2-popup.swal-anim-in { animation: swalPopIn .45s var(--ease-out) both; }
+        .swal2-popup.swal-anim-out { animation: swalPopOut .22s ease-in both; }
+        .swal2-container { transition: background-color .3s ease, backdrop-filter .3s ease; }
+        .swal2-container.swal2-backdrop-show { backdrop-filter: blur(4px); }
+
+        /* Pin peta */
+        .leaflet-interactive.map-pin {
+            animation: pinIn .55s var(--ease-spring) backwards;
+            transform-box: fill-box;
+            transform-origin: center;
+            transition: transform .18s var(--ease-out), stroke-width .18s ease, fill-opacity .18s ease;
+            cursor: pointer;
+        }
+        .leaflet-interactive.map-pin:hover { transform: scale(1.35); stroke-width: 3px; fill-opacity: 1; }
+        @keyframes pinIn { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: scale(1); } }
+
+        /* Popup detail lokasi */
+        .loc-header { background: var(--sidebar-bg); color: #fff; border-bottom: 4px solid var(--brand-color); padding: 1.1rem 1.5rem; }
+        .loc-pin { width: 44px; height: 44px; background: var(--brand-color); color: #1A1A1A; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
+        .loc-kpi { background: #fff; border: 1px solid var(--border-color); border-bottom-width: 4px; border-radius: 1rem; padding: 1.1rem .75rem; text-align: center; height: 100%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, .02); }
+        .loc-stagger > * { animation: riseIn .55s var(--ease-out) both; }
+        .loc-stagger > *:nth-child(1) { animation-delay: .05s; }
+        .loc-stagger > *:nth-child(2) { animation-delay: .12s; }
+        .loc-stagger > *:nth-child(3) { animation-delay: .19s; }
+        .loc-stagger > *:nth-child(4) { animation-delay: .26s; }
+        .loc-row { animation: riseIn .45s var(--ease-out) both; }
+        @keyframes riseIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+        .status-chip { display: inline-flex; align-items: center; gap: .45rem; padding: .35rem .8rem; border-radius: 999px; background: #F8FAFC; border: 1px solid var(--border-color); font-size: .78rem; font-weight: 700; color: var(--text-main); }
+        .status-chip .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; transition-duration: .01ms !important; }
         }
     </style>
 </head>
@@ -667,28 +792,28 @@
                             <!-- 4 KPI Cards -->
                             <div class="row g-3 fs-kpi-row">
                                 <div class="col-md-3">
-                                    <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-info">
+                                    <div class="card-custom kpi-clickable text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-info" role="button" tabindex="0" title="Klik untuk melihat daftar projek" onclick="openKpiModal('potential')" onkeydown="if(event.key==='Enter')openKpiModal('potential')">
                                         <div class="kpi-title" id="kpiTitleTotalAmount">TOTAL POTENTIAL AMOUNT PROJECT</div>
                                         <div class="kpi-value text-info" id="kpiTotalAmount">Rp 0</div>
                                         <div class="small text-muted mt-2 fw-bold" style="height: 18px;"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning">
+                                    <div class="card-custom kpi-clickable text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-warning" role="button" tabindex="0" title="Klik untuk melihat daftar projek" onclick="openKpiModal('revenue')" onkeydown="if(event.key==='Enter')openKpiModal('revenue')">
                                         <div class="kpi-title" id="kpiTitleRev">TOTAL PROJECT AMOUNT (DEAL)</div>
                                         <div class="kpi-value text-success" id="kpiRevenue">Rp 0</div>
                                         <div class="small text-muted mt-2 fw-bold" id="kpiDealPercent"><i class="fas fa-bullseye text-primary me-1"></i> 0% dari Potential</div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-dark">
+                                    <div class="card-custom kpi-clickable text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-dark" role="button" tabindex="0" title="Klik untuk melihat daftar projek" onclick="openKpiModal('total')" onkeydown="if(event.key==='Enter')openKpiModal('total')">
                                         <div class="kpi-title">TOTAL PROJEK</div>
                                         <div class="kpi-value" id="kpiTotalDeal">0</div>
                                         <div class="small text-muted mt-2 fw-bold"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <div class="card-custom text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary">
+                                    <div class="card-custom kpi-clickable text-center h-100 mb-0 d-flex flex-column justify-content-center py-4 border-bottom border-4 border-secondary" role="button" tabindex="0" title="Klik untuk melihat daftar projek" onclick="openKpiModal('pending')" onkeydown="if(event.key==='Enter')openKpiModal('pending')">
                                         <div class="kpi-title" id="kpiTitlePending">PROJEK ON PROGRESS</div>
                                         <div class="kpi-value text-danger" id="kpiTotalPending">0</div>
                                         <div class="small text-muted mt-2 fw-bold"></div>
@@ -724,6 +849,16 @@
                                 </div>
                             </div>
 
+                            <!-- Aging Projek -->
+                            <div class="card-custom mb-0 mt-3" id="cardAging">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                    <h6 class="fw-bold mb-0 text-dark"><i class="fas fa-hourglass-half text-primary me-2"></i>Aging Projek <span class="fw-normal text-muted small">(Quotation belum ada PO / Invoice)</span></h6>
+                                    <span class="small text-muted fw-bold" id="agingSummary"></span>
+                                </div>
+                                <div class="row g-3" id="agingTiles"></div>
+                                <div class="d-flex rounded overflow-hidden mt-3" id="agingBar" style="height: 10px; background: #e9ecef;"></div>
+                            </div>
+
                             <!-- Peta Lokasi -->
                             <div class="card-custom flex-grow-1 mb-0 d-flex flex-column fs-map-card mt-3">
                                 <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-map-marker-alt text-danger me-2"></i>Peta Persebaran Lokasi Projek</h6>
@@ -753,7 +888,13 @@
 
                             <!-- Tabel Matriks -->
                             <div class="card-custom flex-grow-1 mb-0 d-flex flex-column">
-                                <h6 class="fw-bold mb-3 text-dark">Kontribusi Layanan per Bulan</h6>
+                                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                    <h6 class="fw-bold mb-0 text-dark">Kontribusi Layanan per Bulan</h6>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Mode tampilan matriks">
+                                        <button type="button" id="btnMatrixCount" class="btn btn-dark fw-bold" onclick="setMatrixMode('count')"><i class="fas fa-hashtag me-1"></i>Jumlah</button>
+                                        <button type="button" id="btnMatrixAmount" class="btn btn-outline-dark fw-bold" onclick="setMatrixMode('amount')"><i class="fas fa-coins me-1"></i>Nilai (Rp)</button>
+                                    </div>
+                                </div>
                                 <div class="table-responsive">
                                     <table class="table table-hover table-bordered text-center align-middle mb-0" id="tblMatriksDashboard">
                                     </table>
@@ -770,7 +911,7 @@
                         <h3 class="mb-0 fw-bold">Database Projek</h3>
                         
                         <div class="d-flex gap-2 flex-wrap">
-                            <button class="btn btn-outline-info fw-bold edit-allowed" onclick="window.open('https://docs.google.com/spreadsheets/d/1kL3DUrkRsi1ItPYqfkFbkBQ6j1cRuNGcclUxbhKNF0g/edit?usp=sharing', '_blank')"><i class="fas fa-external-link-alt me-2"></i>Buka Spreadsheet</button>
+                            <button class="btn btn-outline-info fw-bold edit-allowed" onclick="openSupabaseDashboard()"><i class="fas fa-external-link-alt me-2"></i>Buka Supabase</button>
                             <button class="btn btn-light border fw-bold edit-allowed" onclick="downloadTemplate()"><i class="fas fa-file-excel me-2 text-success"></i>Template</button>
                             
                             <button class="btn btn-outline-secondary edit-allowed fw-bold" onclick="document.getElementById('importExcelInput').click()"><i class="fas fa-upload me-2"></i>Wipe & Import Data</button>
@@ -782,7 +923,7 @@
                         <div class="d-flex justify-content-between mb-4 align-items-center">
                             <div class="input-group w-50 shadow-sm rounded">
                                 <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
-                                <input type="text" id="searchSales" class="form-control border-start-0 ps-0" placeholder="Pencarian No. Projek, Judul, atau Klien..." onkeyup="renderSalesTable()">
+                                <input type="text" id="searchSales" class="form-control border-start-0 ps-0" placeholder="Pencarian No. Projek, Judul, atau Klien..." oninput="onSalesSearch()">
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -800,6 +941,7 @@
                                 <tbody><!-- Generated by JS --></tbody>
                             </table>
                         </div>
+                        <div id="salesPager" class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2"></div>
                     </div>
                 </div>
 
@@ -808,7 +950,7 @@
                     <h3 class="mb-4 fw-bold">Laporan Ringkasan Sales (Report)</h3>
                     <div class="card-custom mb-4 bg-light border-0">
                         <div class="row g-3 align-items-end">
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label small fw-bold text-dark">Filter Status Akhir</label>
                                 <select class="form-select shadow-sm" id="reportFilterStatus">
                                     <option value="ALL">Semua Status (ALL)</option>
@@ -818,7 +960,7 @@
                                     <option value="NO DEAL">Hanya NO DEAL</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="form-label small fw-bold text-dark">Filter Bulan</label>
                                 <select class="form-select shadow-sm" id="reportFilterBulan">
                                     <option value="ALL">Semua Bulan (ALL)</option>
@@ -834,6 +976,12 @@
                                     <option value="OCT">OCT</option>
                                     <option value="NOV">NOV</option>
                                     <option value="DEC">DEC</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold text-dark">Filter Tahun</label>
+                                <select class="form-select shadow-sm" id="reportFilterTahun">
+                                    <option value="ALL">Semua Tahun (ALL)</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -857,13 +1005,14 @@
                                         <th>Judul Projek</th>
                                         <th>Jenis</th>
                                         <th>Customer</th>
+                                        <th>Category</th>
                                         <th>Bulan</th>
                                         <th>Amount</th>
                                         <th>STATUS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr><td colspan="8" class="text-center py-5 text-muted"><i class="fas fa-table fs-3 mb-2"></i><br>Klik "Tarik Data" untuk menampilkan Laporan</td></tr>
+                                    <tr><td colspan="9" class="text-center py-5 text-muted"><i class="fas fa-table fs-3 mb-2"></i><br>Klik "Tarik Data" untuk menampilkan Laporan</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -922,6 +1071,172 @@
 
     <!-- MODALS SECTION -->
     
+    <!-- Modal Daftar Projek (klik score card) -->
+    <div class="modal fade" id="modalKpi" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 1.25rem; border: none; overflow: hidden;">
+                <div class="loc-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="loc-pin"><i class="fas fa-list-check"></i></div>
+                        <div>
+                            <h5 class="fw-bold mb-0" id="kpiModalTitle">Daftar Projek</h5>
+                            <div class="small" style="color: #A0AEC0;" id="kpiModalSub"></div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" style="background: var(--primary-bg);">
+                    <div class="card-custom mb-0">
+                        <div class="input-group mb-3 shadow-sm rounded">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="kpiModalSearch" class="form-control border-start-0 ps-0" placeholder="Cari No. Projek, Judul, atau Klien..." oninput="onKpiSearch()">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-custom align-middle mb-0" id="tblKpiList">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>No. Projek</th>
+                                        <th>Judul &amp; Jenis</th>
+                                        <th>Customer</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                            <div class="small text-muted" id="kpiModalNote"></div>
+                            <button type="button" class="btn btn-sm btn-outline-dark fw-bold d-none" id="kpiModalMore" onclick="showMoreKpi()">Tampilkan lebih banyak</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Aging Projek -->
+    <div class="modal fade" id="modalAging" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 1.25rem; border: none; overflow: hidden;">
+                <div class="loc-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="loc-pin"><i class="fas fa-hourglass-half"></i></div>
+                        <div>
+                            <h5 class="fw-bold mb-0" id="agingModalTitle">Aging</h5>
+                            <div class="small" style="color: #A0AEC0;" id="agingModalSub"></div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" style="background: var(--primary-bg);">
+                    <div class="card-custom mb-0">
+                        <div class="p-3 rounded mb-3 small" id="agingModalReco" style="background:#f8f9fa;"></div>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-custom align-middle mb-0" id="tblAgingList">
+                                <thead>
+                                    <tr>
+                                        <th>No. Projek</th>
+                                        <th>Judul &amp; Jenis</th>
+                                        <th>Customer</th>
+                                        <th>No. Quotation</th>
+                                        <th>Tgl Mulai</th>
+                                        <th class="text-center">Aging</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="small text-muted mt-3" id="agingModalNote"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail Lokasi (klik pin peta) -->
+    <div class="modal fade" id="modalLocation" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 1.25rem; border: none; overflow: hidden;">
+                <div class="loc-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="loc-pin"><i class="fas fa-map-marker-alt"></i></div>
+                        <div>
+                            <h5 class="fw-bold mb-0" id="locTitle">Lokasi</h5>
+                            <div class="small" style="color: #A0AEC0;" id="locSubtitle"></div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" style="background: var(--primary-bg);">
+                    <div class="row g-3 mb-3 loc-stagger">
+                        <div class="col-6 col-lg-3">
+                            <div class="loc-kpi d-flex flex-column justify-content-center" style="border-bottom-color: #0dcaf0;">
+                                <div class="kpi-title" id="locTitlePotential">TOTAL POTENTIAL AMOUNT PROJECT</div>
+                                <div class="kpi-value text-info" id="locKpiPotential">Rp 0</div>
+                                <div class="small mt-2" style="height: 18px;"></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="loc-kpi d-flex flex-column justify-content-center" style="border-bottom-color: #ffc107;">
+                                <div class="kpi-title" id="locTitleDeal">TOTAL PROJECT AMOUNT (DEAL)</div>
+                                <div class="kpi-value text-success" id="locKpiDeal">Rp 0</div>
+                                <div class="small text-muted mt-2 fw-bold" style="min-height: 18px;"><i class="fas fa-bullseye text-primary me-1"></i> <span id="locDealPct">0</span>% dari Potential</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="loc-kpi d-flex flex-column justify-content-center" style="border-bottom-color: #212529;">
+                                <div class="kpi-title">TOTAL PROJEK</div>
+                                <div class="kpi-value" id="locKpiTotal">0</div>
+                                <div class="small mt-2" style="height: 18px;"></div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-lg-3">
+                            <div class="loc-kpi d-flex flex-column justify-content-center" style="border-bottom-color: #6c757d;">
+                                <div class="kpi-title" id="locTitlePending">PROJEK TERTUNDA (ON PROGRESS)</div>
+                                <div class="kpi-value text-danger" id="locKpiPending">0</div>
+                                <div class="small mt-2" style="height: 18px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-custom mb-3 d-flex flex-wrap align-items-center gap-2 py-3" id="locStatusChips"></div>
+
+                    <div class="card-custom mb-0">
+                        <h6 class="fw-bold mb-3 text-dark"><i class="fas fa-clock-rotate-left text-primary me-2"></i>Transaksi Terbaru</h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-custom align-middle mb-0" id="tblLocLatest">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>No. Projek</th>
+                                        <th>Judul Projek</th>
+                                        <th>Customer</th>
+                                        <th class="text-end">Amount</th>
+                                        <th class="text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="small text-muted mt-3" id="locLatestNote"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal List Cancel -->
     <div class="modal fade" id="modalCancelList" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -1044,20 +1359,105 @@
         Chart.register(ChartDataLabels);
 
         // ==========================================
-        // KONFIGURASI DATABASE GOOGLE SHEETS
+        // MOTION HELPERS (transisi & animasi)
         // ==========================================
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgL7dXrSFmRzq0cVIQnjByb7ym4Q6em2RGqiLgxkNpEmXeWveTw4qs4GsPH9ioFBpUqw/exec'; 
+        // Semua popup SweetAlert (respon sistem) memakai animasi masuk/keluar yang halus
+        window.Swal = Swal.mixin({
+            showClass: { popup: 'swal-anim-in', backdrop: 'swal2-backdrop-show' },
+            hideClass: { popup: 'swal-anim-out', backdrop: 'swal2-backdrop-hide' }
+        });
+
+        function prefersReducedMotion() {
+            return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        }
+
+        // Angka KPI "menghitung naik" dari nilai sebelumnya ke nilai baru
+        function animateNumber(el, to, fmt, duration = 800) {
+            if (!el) return;
+            const from = parseFloat(el.dataset.value || 0) || 0;
+            el.dataset.value = to;
+            if (el._raf) { cancelAnimationFrame(el._raf); el._raf = null; }
+            if (prefersReducedMotion() || from === to) { el.innerText = fmt(to); return; }
+
+            el.classList.remove('kpi-bump');
+            void el.offsetWidth;
+            el.classList.add('kpi-bump');
+
+            const start = performance.now();
+            const ease = x => 1 - Math.pow(1 - x, 3);
+            const step = now => {
+                const p = Math.min((now - start) / duration, 1);
+                el.innerText = fmt(Math.round(from + (to - from) * ease(p)));
+                if (p < 1) { el._raf = requestAnimationFrame(step); } else { el._raf = null; el.innerText = fmt(to); }
+            };
+            el._raf = requestAnimationFrame(step);
+        }
+
+        // Memutar ulang animasi "segar" pada elemen yang isinya baru diganti
+        function softRefresh(el) {
+            if (!el) return;
+            el.classList.remove('soft-refresh');
+            void el.offsetWidth;
+            el.classList.add('soft-refresh');
+        }
+
+        function shakeLoginCard() {
+            const card = document.querySelector('.login-card');
+            if (!card) return;
+            card.classList.remove('shake');
+            void card.offsetWidth;
+            card.classList.add('shake');
+            card.addEventListener('animationend', () => card.classList.remove('shake'), { once: true });
+        }
+
+        // ==========================================
+        // KONFIGURASI DATABASE SUPABASE
+        // ==========================================
+        // >>> ISI DUA NILAI INI dari Supabase Dashboard > Project Settings > API <<<
+        const SUPABASE_URL      = 'https://pwzixnrbpoahpagvkjjx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3eml4bnJicG9haHBhZ3Zramp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2MjM4MjEsImV4cCI6MjEwODE5OTgyMX0.G2xCIzEk53BjhIHj2ew5nAmZkRzJS1-RY0X525v-SKQ';   // anon / publishable key (aman dipakai di browser)
+        const LOGIN_EMAIL_DOMAIN = 'salespro.local'; // harus sama dengan di SQL (username -> username@salespro.local)
 
         const DB_KEY_SALES = 'sales_data';
         const DB_KEY_USR   = 'sales_users';
         const DB_KEY_LOG   = 'sales_logs';
 
-        const DB_MAP = {
-            [DB_KEY_USR]:   { sheet: 'Users', key: 'username' },
-            [DB_KEY_SALES]: { sheet: 'Data_Sales', key: 'No. Projek' },
-            [DB_KEY_LOG]:   { sheet: 'Logs', key: 'id' }
-        };
-        
+        let sb = null; // Supabase client (dibuat di initDB)
+
+        // Pemetaan nama kolom aplikasi <-> kolom database (tipe: 'num' = bigint, 'ts' = timestamptz, default = text)
+        const SALES_COLS = [
+            ['Tgl Dibuat', 'tgl_dibuat'], ['Jenis', 'jenis'], ['No. Projek', 'no_projek'],
+            ['Judul Projek', 'judul_projek'], ['Customer', 'customer'], ['Category', 'category'],
+            ['PIC Customer', 'pic_customer'], ['Nilai', 'nilai', 'num'], ['Status', 'status_approval'],
+            ['Tgl Approval', 'tgl_approval'], ['Keterangan', 'keterangan'], ['No. Proposal', 'no_proposal'],
+            ['No. Quotation', 'no_quotation'], ['No. PO/SPK', 'no_po_spk'], ['No. Invoice', 'no_invoice'],
+            ['No. BAST/P', 'no_bast_p'], ['No. LPJ', 'no_lpj'], ['Dibuat/Diteruskan Oleh', 'dibuat_diteruskan_oleh'],
+            ['Lokasi', 'lokasi'], ['amount', 'amount', 'num'], ['MONTH', 'bulan'], ['Cust name', 'cust_name'],
+            ['STATUS', 'status'], ['Aging', 'aging'], ['Aging (days)', 'aging_days'],
+            ['lastUpdatedBy', 'last_updated_by'], ['lastUpdatedAt', 'last_updated_at', 'ts']
+        ];
+
+        function fromDbRow(r) {
+            const out = {};
+            SALES_COLS.forEach(([app, db, type]) => {
+                let v = r[db];
+                if (type === 'num') out[app] = (v === null || v === undefined) ? 0 : v;
+                else out[app] = (v === null || v === undefined) ? '' : v;
+            });
+            return out;
+        }
+
+        function toDbRow(row) {
+            const out = {};
+            SALES_COLS.forEach(([app, db, type]) => {
+                const v = row[app];
+                if (type === 'num') out[db] = parseAmount(v);
+                else if (type === 'ts') out[db] = v ? String(v) : null;
+                else out[db] = (v === undefined || v === null) ? '' : String(v).trim();
+            });
+            return out;
+        }
+
         let localDB = {};
         let currentUser = null;
         let chartInstances = {};
@@ -1150,113 +1550,99 @@
             return true;
         }
 
-        // 2. INISIALISASI DATABASE & CACHING
-        async function initDB() {
+        // 2. INISIALISASI SUPABASE & LOAD DATA
+        function initDB() {
             const loginBtn = document.getElementById('btnLogin');
-            if(loginBtn) {
-                loginBtn.disabled = true;
-                loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MENGHUBUNGKAN KE SERVER...';
-            }
-            
-            try {
-                let res = await fetch(SCRIPT_URL + '?action=getAllData');
-                let result = await res.json();
-                
-                if (result.status === "success") {
-                    localDB[DB_KEY_USR]   = result.data.users || [];
-                    localDB[DB_KEY_SALES] = result.data.sales_data || [];
-                    
-                    let fetchedLogs = result.data.logs || [];
-                    if (!fetchedLogs || fetchedLogs.length === 0) {
-                        let localBackup = localStorage.getItem('sales_backup_logs');
-                        fetchedLogs = localBackup ? JSON.parse(localBackup) : [];
-                    }
-                    localDB[DB_KEY_LOG] = fetchedLogs;
-                    
-                    if(localDB[DB_KEY_USR].length === 0) {
-                        localDB[DB_KEY_USR].push({username: 'admin', password: '123', role: 'admin', active: true});
-                    }
-                    
-                    if(loginBtn) {
-                        loginBtn.disabled = false;
-                        loginBtn.innerHTML = 'MASUK <i class="fas fa-arrow-right ms-2"></i>';
-                    }
-                }
-            } catch (error) {
-                console.error("Gagal memuat data dari Spreadsheet:", error);
-                if(loginBtn) {
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = 'COBA LAGI <i class="fas fa-redo ms-2"></i>';
-                }
-                Swal.fire('Koneksi Gagal', 'Gagal memuat data. Periksa koneksi internet atau status Apps Script (Pastikan sudah dideploy ke publik).', 'error');
-            }
-        }
-
-        function getDB(key) { 
-            return localDB[key] || []; 
-        }
-
-        function saveDB(key, newData) {
-            let oldData = localDB[key] || [];
-            localDB[key] = newData; 
-            
-            if(key === DB_KEY_LOG) {
-                localStorage.setItem('sales_backup_logs', JSON.stringify(newData));
-            }
-
-            if (newData.length === 0 && oldData.length > 0) {
-                fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "deleteAll", sheetName: DB_MAP[key].sheet }) });
+            const notConfigured = !window.supabase || SUPABASE_URL.includes('YOUR-PROJECT') || SUPABASE_ANON_KEY.includes('YOUR-ANON');
+            if (notConfigured) {
+                if (loginBtn) { loginBtn.disabled = true; loginBtn.innerHTML = 'KONFIGURASI BELUM LENGKAP'; }
+                Swal.fire('Konfigurasi Belum Lengkap', 'Isi SUPABASE_URL dan SUPABASE_ANON_KEY di bagian atas script pada index.html.', 'warning');
                 return;
             }
-
-            let keyField = DB_MAP[key].key;
-            let oldKeys = oldData.map(x => String(x[keyField]));
-            let newKeys = newData.map(x => String(x[keyField]));
-            
-            let deletedKeys = oldKeys.filter(k => !newKeys.includes(k));
-            if (deletedKeys.length > 0) {
-                deletedKeys.forEach(dk => {
-                    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "delete", sheetName: DB_MAP[key].sheet, keyField: keyField, keyValue: dk }) });
-                });
-            }
-            
-            if (newData.length > 0) {
-                const chunkSize = 500;
-                for (let i = 0; i < newData.length; i += chunkSize) {
-                    let chunk = newData.slice(i, i + chunkSize);
-                    fetch(SCRIPT_URL, { 
-                        method: 'POST', 
-                        body: JSON.stringify({ 
-                            action: "upsert", 
-                            sheetName: DB_MAP[key].sheet, 
-                            keyField: keyField, 
-                            data: chunk 
-                        }) 
-                    });
-                }
+            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false }
+            });
+            if (loginBtn) {
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = 'MASUK <i class="fas fa-arrow-right ms-2"></i>';
             }
         }
 
-        async function saveSalesDBWipeAndReplace(newData) {
-            localDB[DB_KEY_SALES] = newData;
-
-            await fetch(SCRIPT_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: "deleteAll", sheetName: DB_MAP[DB_KEY_SALES].sheet }) 
-            });
-
-            const chunkSize = 500;
-            for (let i = 0; i < newData.length; i += chunkSize) {
-                let chunk = newData.slice(i, i + chunkSize);
-                await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ 
-                        action: "insertData", 
-                        sheetName: DB_MAP[DB_KEY_SALES].sheet, 
-                        data: chunk 
-                    }) 
-                });
+        function openSupabaseDashboard() {
+            try {
+                const ref = new URL(SUPABASE_URL).hostname.split('.')[0];
+                window.open(`https://supabase.com/dashboard/project/${ref}/editor`, '_blank');
+            } catch (e) {
+                window.open('https://supabase.com/dashboard', '_blank');
             }
+        }
+
+        // Ambil semua baris (melewati batas 1000 baris per request milik Supabase)
+        async function fetchAll(table, columns, orderCol, ascending = true) {
+            const pageSize = 1000;
+            let from = 0;
+            let all = [];
+            while (true) {
+                const { data, error } = await sb.from(table).select(columns)
+                    .order(orderCol, { ascending })
+                    .range(from, from + pageSize - 1);
+                if (error) throw error;
+                all = all.concat(data || []);
+                if (!data || data.length < pageSize) break;
+                from += pageSize;
+            }
+            return all;
+        }
+
+        async function reloadUsers() {
+            const { data, error } = await sb.from('profiles')
+                .select('id, username, role, active')
+                .order('created_at', { ascending: true });
+            if (error) throw error;
+            localDB[DB_KEY_USR] = data || [];
+        }
+
+        async function loadAllData() {
+            const salesRows = await fetchAll('sales_data', '*', 'id');
+            localDB[DB_KEY_SALES] = salesRows.map(fromDbRow);
+
+            if (currentUser && currentUser.role === 'admin') {
+                await reloadUsers();
+                const { data: logs, error } = await sb.from('activity_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(2000);
+                if (error) throw error;
+                localDB[DB_KEY_LOG] = (logs || []).map(l => ({
+                    id: l.id,
+                    timestamp: l.created_at,
+                    username: l.username,
+                    action: l.action,
+                    detail: l.detail,
+                    extendedDetail: l.extended_detail
+                }));
+            } else {
+                localDB[DB_KEY_USR] = [];
+                localDB[DB_KEY_LOG] = [];
+            }
+        }
+
+        function getDB(key) {
+            return localDB[key] || [];
+        }
+
+        // Wipe & Replace dijalankan atomik di server (satu transaksi) lewat fungsi replace_sales_data
+        async function saveSalesDBWipeAndReplace(newData) {
+            const map = new Map();
+            newData.forEach(r => { map.set(String(r['No. Projek']).trim(), r); });
+            const dupes = newData.length - map.size;
+            const rows = Array.from(map.values()).map(toDbRow);
+
+            const { data, error } = await sb.rpc('replace_sales_data', { p_rows: rows });
+            if (error) throw error;
+
+            localDB[DB_KEY_SALES] = rows.map(fromDbRow);
+            return { count: data, dupes: dupes };
         }
 
         // PENCATAT LOG AKTIVITAS (AUDIT TRAIL)
@@ -1272,7 +1658,18 @@
                 extendedDetail: extendedDetail
             };
             logs.push(logEntry);
-            saveDB(DB_KEY_LOG, logs);
+            localDB[DB_KEY_LOG] = logs;
+
+            if (!sb || !currentUser) return Promise.resolve();
+            // username & waktu diisi ulang oleh server (trigger), jadi tidak bisa dipalsukan
+            return sb.from('activity_logs').insert({
+                id: logEntry.id,
+                action: action,
+                detail: detail,
+                extended_detail: extendedDetail
+            }).then(({ error }) => {
+                if (error) console.warn('Gagal menyimpan log:', error.message);
+            });
         }
 
         function formatLogDate(isoString) {
@@ -1294,41 +1691,98 @@
             }
         }
 
-        function handleLogin(e) {
+        function usernameToEmail(u) {
+            return String(u).trim().toLowerCase() + '@' + LOGIN_EMAIL_DOMAIN;
+        }
+
+        async function handleLogin(e) {
             e.preventDefault();
+            if (!sb) return;
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
-            const users = getDB(DB_KEY_USR);
-            
-            const user = users.find(x => {
-                let activeStatus = String(x.active).toUpperCase().trim();
-                let isUserActive = (x.active === true || activeStatus === 'TRUE' || activeStatus === 'ACTIVE');
-                return x.username === u && x.password === p && isUserActive;
-            });
-            
-            if(user) {
-                currentUser = user;
-                document.getElementById('loginScreen').classList.add('d-none');
-                document.getElementById('appContainer').classList.remove('d-none');
-                document.getElementById('displayUserName').innerText = u.toUpperCase();
-                document.getElementById('displayUserInitial').innerText = u.charAt(0).toUpperCase();
-                document.getElementById('displayUserRole').innerText = user.role;
-                
-                Swal.mixin({ customClass: { confirmButton: 'btn btn-primary px-4', cancelButton: 'btn btn-outline-secondary px-4 me-2' }, buttonsStyling: false });
-                
+            const btn = document.getElementById('btnLogin');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> MEMVERIFIKASI...';
+            const resetBtn = () => {
+                btn.disabled = false;
+                btn.innerHTML = 'MASUK <i class="fas fa-arrow-right ms-2"></i>';
+            };
+
+            // 1) Autentikasi + cek profil / status aktif
+            let prof = null;
+            try {
+                const { data, error } = await sb.auth.signInWithPassword({ email: usernameToEmail(u), password: p });
+                if (error) throw error;
+                const res = await sb.from('profiles').select('id, username, role, active').eq('id', data.user.id).maybeSingle();
+                if (res.error) throw res.error;
+                prof = res.data;
+                if (!prof || !prof.active) {
+                    await sb.auth.signOut();
+                    prof = null;
+                }
+            } catch (err) {
+                console.error(err);
+                resetBtn();
+                shakeLoginCard();
+                const isNetwork = err && /fetch|network/i.test(String(err.message || ''));
+                Swal.fire({
+                    title: isNetwork ? 'Koneksi Gagal' : 'Akses Ditolak',
+                    text: isNetwork ? 'Tidak dapat terhubung ke server. Periksa koneksi internet.' : 'Username, password salah, atau akun non-aktif.',
+                    icon: 'error',
+                    confirmButtonColor: '#1A1A1A'
+                });
+                return;
+            }
+
+            if (!prof) {
+                resetBtn();
+                shakeLoginCard();
+                Swal.fire({title: 'Akses Ditolak', text: 'Username, password salah, atau akun non-aktif.', icon: 'error', confirmButtonColor: '#1A1A1A' });
+                return;
+            }
+
+            // 2) Muat data sesuai hak akses
+            currentUser = prof;
+            try {
+                await loadAllData();
+            } catch (err) {
+                console.error(err);
+                currentUser = null;
+                await sb.auth.signOut();
+                resetBtn();
+                Swal.fire('Gagal Memuat Data', 'Login berhasil tetapi data tidak dapat dimuat. Pastikan file SQL sudah dijalankan di Supabase. Detail: ' + (err.message || err), 'error');
+                return;
+            }
+
+            resetBtn();
+            const loginEl = document.getElementById('loginScreen');
+            const appEl = document.getElementById('appContainer');
+            document.getElementById('displayUserName').innerText = prof.username.toUpperCase();
+            document.getElementById('displayUserInitial').innerText = prof.username.charAt(0).toUpperCase();
+            document.getElementById('displayUserRole').innerText = prof.role;
+
+            // Transisi halus: tombol berubah "BERHASIL", layar login memudar, aplikasi masuk
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-check me-2"></i> BERHASIL';
+            loginEl.classList.add('leaving');
+            setTimeout(() => {
+                loginEl.classList.add('d-none');
+                loginEl.classList.remove('leaving');
+                appEl.classList.remove('d-none');
+                appEl.classList.add('app-enter');
+                setTimeout(() => appEl.classList.remove('app-enter'), 700); // lepas class animasi agar tidak ada sisa efek
                 applyRolePermissions();
                 switchView('dashboard', document.querySelector('.nav-link-custom'));
                 addLog('Login System', 'User masuk ke dalam sistem', 'Login berhasil melalui portal utama.');
-            } else {
-                Swal.fire({title: 'Akses Ditolak', text: 'Username, password salah, atau akun non-aktif.', icon: 'error', confirmButtonColor: '#1A1A1A' });
-            }
+            }, 380);
         }
 
-        function logout() {
-            addLog('Logout System', 'User keluar dari sistem', 'Sesi diakhiri oleh user.');
-            setTimeout(() => { 
-                location.reload(); 
-            }, 500);
+        async function logout() {
+            await addLog('Logout System', 'User keluar dari sistem', 'Sesi diakhiri oleh user.');
+            try { await sb.auth.signOut(); } catch (e) {}
+            document.getElementById('appContainer').classList.add('app-leave');
+            setTimeout(() => location.reload(), 380);
         }
 
         function applyRolePermissions() {
@@ -1379,8 +1833,55 @@
 
             if(viewId === 'dashboard') renderDashboard();
             if(viewId === 'sales') renderSalesTable();
+            if(viewId === 'reports') populateReportYears();
             if(viewId === 'users') renderUsers();
             if(viewId === 'logs') renderLogsTable();
+        }
+
+        // --- KATEGORI CUSTOMER (Perusahaan / Instansi / Pemerintahan / Lainnya) ---
+        function getCustomerCategory(name) {
+          const raw = String(name || '').trim();
+          const n = raw.toUpperCase().replace(/[^A-Z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+          if (!n) return 'Lainnya';
+
+          // 1. Lembaga / LSP -> LSP ABI
+          if (/\b(LEMBAGA|LSP)\b/.test(n)) return 'LSP ABI';
+
+          // 2. PT United Tractors (semua lokasi / cabang / site / typo)
+          if (/\bUNITED\s+TRAC\w*/.test(n)) return 'PT United Tractors';
+
+          // 3. PT lain -> kategori = nama perusahaan (tanpa lokasi / Tbk), huruf kapital rapi
+          if (/^PT\b/.test(n)) {
+            let base = raw.replace(/\(.*?\)|\[.*?\]/g, ' ')
+                          .split(/\s+-\s+|\s*[\/,]\s*|\bsite\b|\bcabang\b|\bcab\b|\bunit\b/i)[0];
+            base = base.replace(/\bTbk\b\.?/gi, ' ').replace(/[^A-Za-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+            const words = base.split(' ').filter(Boolean).map((w, i) => {
+              const u = w.toUpperCase();
+              if (i === 0 && u === 'PT') return 'PT';
+              return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+            });
+            return words.length > 1 ? words.join(' ') : 'Perusahaan';
+          }
+
+          // 4. Badan usaha lain
+          if (/^(CV|KOPERASI|KOP|UD|PD|FIRMA)\b/.test(n)) return 'Perusahaan';
+
+          // 5. Pemerintahan
+          if (/\b(DINAS|UPTD|UPT|BLK|PEMERINTAH|PEMKAB|PEMKOT|PEMPROV|PEMDA|KEMENTERIAN|KEMENAKER|KEMENPERIN|BAPPEDA|BKPSDM|BPSDM|DPRD)\b/.test(n)) return 'Pemerintahan';
+
+          // 6. Instansi (sekolah, kampus, balai, dll)
+          if (/\b(BALAI|SMK|SMKN|SMKS|SMA|SMAN|SMP|SMPN|SD|SDN|MAN|MTS|MTSN|STM|SEKOLAH|SCHOOL|UNIVERSITAS|UNIV|POLITEKNIK|POLTEK|INSTITUT|AKADEMI|KAMPUS|PESANTREN|YAYASAN|LPK)\b/.test(n)) return 'Instansi';
+
+          if (/\b(TBK|PERSERO|CORP|LTD|INC)\b/.test(n)) return 'Perusahaan';
+
+          // 7. Nama perorangan (2-4 kata huruf biasa, tanpa angka) -> Instansi
+          if (/^(BPK|BAPAK|IBU|MR|MRS|MS)\s/.test(n) || (/^[A-Za-z.' ]+$/.test(raw) && n.split(' ').length >= 2 && n.split(' ').length <= 4)) return 'Instansi';
+
+          return 'Lainnya';
+        }
+        function getRowCategory(row) {
+            // Selalu dihitung dari nama customer memakai aturan terbaru (abaikan nilai lama di sheet)
+            return getCustomerCategory(row['Cust name'] || row['Customer']);
         }
 
         // --- DASHBOARD ANALYTICS ---
@@ -1391,11 +1892,107 @@
             return parseInt(str) || 0;
         }
         
+        const RP_FORMATTER = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
         function formatRp(angka) { 
-            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka); 
+            return RP_FORMATTER.format(angka); 
+        }
+
+        // --- UX HOVER CHART: bagian yang di-hover menonjol, bagian lain meredup ---
+        function hexToRgba(hex, a) {
+            let h = String(hex).replace('#', '');
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            const n = parseInt(h, 16);
+            if (isNaN(n) || h.length !== 6) return hex;
+            return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+        }
+        function setChartFocus(chart, idx) {
+            if (chart._focusIdx === idx) return;
+            chart._focusIdx = idx;
+            const ds = chart.data.datasets[0];
+            if (!ds._origColors) ds._origColors = Array.isArray(ds.backgroundColor) ? ds.backgroundColor.slice() : [ds.backgroundColor];
+            const n = ds.data.length;
+            ds.backgroundColor = Array.from({ length: n }, (_, i) => {
+                const c = ds._origColors[i % ds._origColors.length];
+                return (idx === -1 || i === idx) ? c : hexToRgba(c, 0.28);
+            });
+            chart.update('none');
+        }
+        const hoverFocusPlugin = {
+            id: 'hoverFocus',
+            defaults: { enabled: false },
+            afterEvent(chart, args, opts) {
+                if (!opts || !opts.enabled) return;
+                const t = args.event.type;
+                if (t !== 'mousemove' && t !== 'mouseout') return;
+                const act = chart.getActiveElements();
+                setChartFocus(chart, act.length ? act[0].index : -1);
+            }
+        };
+        if (window.Chart) Chart.register(hoverFocusPlugin);
+        const pieLegendHover = {
+            onHover: (e, item, legend) => {
+                const c = legend.chart;
+                c.setActiveElements([{ datasetIndex: 0, index: item.index }]);
+                setChartFocus(c, item.index);
+                c.update('none');
+                if (e.native && e.native.target) e.native.target.style.cursor = 'pointer';
+            },
+            onLeave: (e, item, legend) => {
+                const c = legend.chart;
+                c.setActiveElements([]);
+                setChartFocus(c, -1);
+                c.update('none');
+                if (e.native && e.native.target) e.native.target.style.cursor = 'default';
+            }
+        };
+
+        // --- MATRIKS KONTRIBUSI (Jumlah / Nilai Rp) ---
+        let matrixMode = 'count';
+        let matrixCache = { count: {}, amount: {}, months: [] };
+
+        function formatShortRp(n) {
+            n = Math.round(n || 0);
+            if (n <= 0) return '-';
+            const fmt = (v, d) => v.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: d });
+            if (n >= 1e12) return fmt(n / 1e12, 2) + ' T';
+            if (n >= 1e9)  return fmt(n / 1e9, 2) + ' M';
+            if (n >= 1e6)  return fmt(n / 1e6, 1) + ' Jt';
+            if (n >= 1e3)  return fmt(n / 1e3, 0) + ' Rb';
+            return String(n);
+        }
+
+        function setMatrixMode(mode) {
+            matrixMode = mode;
+            document.getElementById('btnMatrixCount').className  = 'btn fw-bold ' + (mode === 'count'  ? 'btn-dark' : 'btn-outline-dark');
+            document.getElementById('btnMatrixAmount').className = 'btn fw-bold ' + (mode === 'amount' ? 'btn-dark' : 'btn-outline-dark');
+            renderMatrix();
+        }
+
+        function renderMatrix() {
+            const isAmt = matrixMode === 'amount';
+            const src = isAmt ? matrixCache.amount : matrixCache.count;
+            const months = matrixCache.months;
+            const show = v => isAmt ? formatShortRp(v) : (v > 0 ? v : '-');
+            const tip  = v => (isAmt && v > 0) ? ` title="${formatRp(v)}"` : '';
+
+            let thMonths = months.map(m => `<th>${m}</th>`).join('');
+            let html = `<thead class="table-dark"><tr><th class="text-start">Jenis Projek</th>${thMonths}<th>Total</th></tr></thead><tbody>`;
+            for (let jns in src) {
+                html += `<tr><td class="fw-bold text-start text-dark">${jns}</td>`;
+                let rowTotal = 0;
+                months.forEach(m => {
+                    let val = src[jns][m] || 0;
+                    rowTotal += val;
+                    html += `<td class="${val>0?'fw-semibold':''}"${tip(val)}>${show(val)}</td>`;
+                });
+                html += `<td class="fw-bold bg-light text-dark"${tip(rowTotal)}>${isAmt ? formatShortRp(rowTotal) : rowTotal}</td></tr>`;
+            }
+            document.getElementById('tblMatriksDashboard').innerHTML = html + `</tbody>`;
+            softRefresh(document.getElementById('tblMatriksDashboard').parentElement);
         }
 
         function renderDashboard() {
+            try { renderAging(); } catch (e) { console.error('Aging error:', e); }
             const data = getDB(DB_KEY_SALES);
             const dashFilterStatus = document.getElementById('dashFilterStatus').value; 
             const dashFilterBulan = document.getElementById('dashFilterBulan').value; 
@@ -1409,6 +2006,7 @@
             
             let clients = {}; 
             let matrix = {}; 
+            let matrixAmt = {}; 
             let monthsSet = new Set();
             
             let statusCounts = { 'DEAL':0, 'ON PROGRESS':0, 'NEW':0, 'NO DEAL':0 };
@@ -1417,6 +2015,9 @@
             
             let cityCountsMap = {}; 
             let cityRealNamesMap = {}; 
+
+            getSalesIndex();
+            const kpiTmp = { potential: [], revenue: [], total: [], progressAll: [] };
 
             data.forEach(row => {
                 let status = String(row['STATUS'] || '').toUpperCase().trim();
@@ -1443,6 +2044,7 @@
                 if(isPassedBulan) {
                     if(statusCounts[status] !== undefined) statusCounts[status]++;
                     if (status === 'ON PROGRESS') countInProgressOverall++;
+                    if (status === 'ON PROGRESS' && salesMetaMap.get(row)) kpiTmp.progressAll.push(salesMetaMap.get(row));
                     
                     if (status === 'CANCEL' || status === 'NO DEAL') {
                         let keteranganRaw = row['Keterangan'] || row['keterangan'] || '';
@@ -1455,13 +2057,17 @@
                 if (isPassedStatus && isPassedBulan) {
                     countFiltered++; 
                     totalAmountFiltered += amt;
+                    const _meta = salesMetaMap.get(row);
+                    if (_meta) { kpiTmp.potential.push(_meta); kpiTmp.total.push(_meta); }
                     
                     if (dashFilterStatus === 'ALL') {
                         if (status === 'DEAL') { 
                             totalRev += amt; 
+                            if (_meta) kpiTmp.revenue.push(_meta);
                         }
                     } else {
                         totalRev += amt;
+                        if (_meta) kpiTmp.revenue.push(_meta);
                     }
                     
                     if(!clients[clientName]) clients[clientName] = 0; 
@@ -1473,16 +2079,27 @@
                     if(!matrix[jenis]) matrix[jenis] = {};
                     if(!matrix[jenis][bulan]) matrix[jenis][bulan] = 0;
                     matrix[jenis][bulan]++;
+
+                    if(!matrixAmt[jenis]) matrixAmt[jenis] = {};
+                    if(!matrixAmt[jenis][bulan]) matrixAmt[jenis][bulan] = 0;
+                    matrixAmt[jenis][bulan] += amt;
                     
                     monthsSet.add(bulan);
                     
                     if(lokasiRaw !== '') {
-                        let cleanName = lokasiRaw.toLowerCase().replace(/kabupaten|kab\.|kota/gi, '').trim();
+                        let cleanName = cleanLokasiKey(lokasiRaw);
                         cityCountsMap[cleanName] = (cityCountsMap[cleanName] || 0) + 1;
                         cityRealNamesMap[cleanName] = lokasiRaw;
                     }
                 }
             });
+
+            kpiData = {
+                potential: kpiTmp.potential,
+                revenue: kpiTmp.revenue,
+                total: kpiTmp.total,
+                pending: dashFilterStatus === 'ALL' ? kpiTmp.progressAll : kpiTmp.total
+            };
 
             let filterTextName = dashFilterStatus === 'ALL' ? 'DEAL' : dashFilterStatus;
             
@@ -1490,11 +2107,11 @@
             document.getElementById('kpiTitleTotalAmount').innerText = dashFilterStatus === 'ALL' ? 'TOTAL POTENTIAL AMOUNT PROJECT' : `TOTAL POTENTIAL AMOUNT PROJECT (${dashFilterStatus})`;
             document.getElementById('kpiTitlePending').innerText = dashFilterStatus === 'ALL' ? 'PROJEK TERTUNDA (ON PROGRESS)' : `PROJEK (${dashFilterStatus})`;
             
-            document.getElementById('kpiRevenue').innerText = formatRp(totalRev);
-            document.getElementById('kpiTotalAmount').innerText = formatRp(totalAmountFiltered);
+            animateNumber(document.getElementById('kpiRevenue'), totalRev, formatRp);
+            animateNumber(document.getElementById('kpiTotalAmount'), totalAmountFiltered, formatRp);
             
-            document.getElementById('kpiTotalDeal').innerText = countFiltered;
-            document.getElementById('kpiTotalPending').innerText = dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered;
+            animateNumber(document.getElementById('kpiTotalDeal'), countFiltered, String);
+            animateNumber(document.getElementById('kpiTotalPending'), dashFilterStatus === 'ALL' ? countInProgressOverall : countFiltered, String);
             
             let dealPct = totalAmountFiltered === 0 ? "0" : ((totalRev / totalAmountFiltered) * 100).toFixed(1);
             document.getElementById('kpiDealPercent').innerHTML = `<i class="fas fa-bullseye text-primary me-1"></i> ${dealPct}% dari Potential Amount`;
@@ -1521,53 +2138,54 @@
                 return (monthOrder[a] || 99) - (monthOrder[b] || 99);
             });
 
-            let thMonths = arrMonths.map(m => `<th>${m}</th>`).join('');
-            let htmlMatriks = `<thead class="table-dark"><tr><th class="text-start">Jenis Projek</th>${thMonths}<th>Total</th></tr></thead><tbody>`;
-            
-            for(let jns in matrix) {
-                htmlMatriks += `<tr><td class="fw-bold text-start text-dark">${jns}</td>`;
-                let rowTotal = 0; 
-                arrMonths.forEach(m => { 
-                    let val = matrix[jns][m] || 0; 
-                    rowTotal += val; 
-                    htmlMatriks += `<td class="${val>0?'fw-semibold':''}">${val > 0 ? val : '-'}</td>`; 
-                });
-                htmlMatriks += `<td class="fw-bold bg-light text-dark">${rowTotal}</td></tr>`;
-            }
-            document.getElementById('tblMatriksDashboard').innerHTML = htmlMatriks + `</tbody>`;
+            matrixCache = { count: matrix, amount: matrixAmt, months: arrMonths };
+            renderMatrix();
 
             // --- RENDER GRAFIK ---
             const utColors = ['#FFC000', '#1A1A1A', '#718096', '#3b82f6', '#22c55e', '#ef4444'];
             
             let sortedClients = Object.keys(clients).sort((a,b) => clients[b] - clients[a]).slice(0, 5);
             if(chartInstances['chartClient']) chartInstances['chartClient'].destroy();
+            const shortName = (n) => String(n).length > 26 ? String(n).slice(0, 25).trim() + '…' : String(n);
             chartInstances['chartClient'] = new Chart(document.getElementById('chartClient').getContext('2d'), {
-                type: 'doughnut',
+                type: 'bar',
                 data: { 
                     labels: sortedClients, 
                     datasets: [{ 
+                        label: 'Total Amount', 
                         data: sortedClients.map(c => clients[c]), 
                         backgroundColor: utColors, 
-                        borderWidth: 0 
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barThickness: 'flex',
+                        maxBarThickness: 34
                     }] 
                 },
                 options: { 
+                    indexAxis: 'y',
                     responsive: true, 
                     maintainAspectRatio: false, 
+                    layout: { padding: { right: 64 } },
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => formatShortRp(v) === '-' ? '0' : formatShortRp(v) } },
+                        y: { grid: { display: false }, ticks: { autoSkip: false, callback: function(v) { return shortName(this.getLabelForValue(v)); } } }
+                    },
                     plugins: { 
-                        legend: { position: 'bottom' },
-                        datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 10 },
-                            textStrokeColor: '#1A1A1A',
-                            textStrokeWidth: 2,
-                            formatter: (value, ctx) => {
-                                let sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                if (sum === 0 || value === 0) return null;
-                                let pct = (value * 100 / sum);
-                                if (pct < 4) return null; 
-                                return pct.toFixed(1) + "%";
+                        hoverFocus: { enabled: true },
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: items => items.length ? sortedClients[items[0].dataIndex] : '',
+                                label: ctx => formatRp(ctx.parsed.x)
                             }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            clamp: true,
+                            color: '#1A1A1A',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => value > 0 ? formatShortRp(value) : null
                         }
                     } 
                 }
@@ -1591,6 +2209,7 @@
                     responsive: true, 
                     maintainAspectRatio: false, 
                     plugins: { 
+                        hoverFocus: { enabled: true },
                         legend: { display: false },
                         datalabels: {
                             color: '#fff',
@@ -1616,14 +2235,19 @@
                     datasets: [{ 
                         data: Object.values(jenisCounts), 
                         backgroundColor: utColors, 
-                        borderWidth: 0 
+                        borderWidth: 0,
+                        spacing: 5,
+                        borderRadius: 5,
+                        hoverOffset: 14
                     }] 
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
+                    layout: { padding: 16 },
                     plugins: { 
-                        legend: { position: 'bottom' },
+                        hoverFocus: { enabled: true },
+                        legend: { position: 'bottom', ...pieLegendHover },
                         datalabels: {
                             color: '#fff',
                             font: { weight: 'bold', size: 10 },
@@ -1652,15 +2276,22 @@
                     datasets: [{ 
                         data: sortedCancelData, 
                         backgroundColor: ['#ef4444', '#f97316', '#8b5cf6', '#64748b', '#cbd5e1'], 
-                        borderWidth: 0 
+                        borderWidth: 0,
+                        spacing: 5,
+                        borderRadius: 5,
+                        hoverOffset: 14
                     }] 
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
+                    layout: { padding: 16 },
                     plugins: { 
+                        hoverFocus: { enabled: true },
                         legend: { 
                             position: 'bottom',
+                            onHover: pieLegendHover.onHover,
+                            onLeave: pieLegendHover.onLeave,
                             onClick: function(e, legendItem, legend) {
                                 openCancelListModal(legendItem.text);
                             }
@@ -1779,6 +2410,7 @@
             });
 
             initAndPlotMap(cityCountsMap, cityRealNamesMap);
+            softRefresh(document.getElementById('dashStory'));
         }
 
         let cancelListModalInst;
@@ -1868,6 +2500,136 @@
             }, 300);
         }
 
+        // ---------- Detail lokasi (klik pin peta) ----------
+        function escapeHtml(s) {
+            return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function normalizeStatus(v) {
+            let s = String(v || '').toUpperCase().trim();
+            return s === 'PENDING' ? 'ON PROGRESS' : s;
+        }
+
+        function cleanLokasiKey(raw) {
+            return String(raw || '').trim().toLowerCase().replace(/kabupaten|kab\.|kota/gi, '').trim();
+        }
+
+        function parseRowTime(v) {
+            if (!v || v === '-') return 0;
+            let s = String(v).trim();
+            let d = new Date(s);
+            if (isNaN(d.getTime())) {
+                const p = s.split(/[-/ T]/);
+                if (p.length >= 3 && p[0].length === 2) d = new Date(`${p[2]}-${p[1]}-${p[0]}`);
+            }
+            return isNaN(d.getTime()) ? 0 : d.getTime();
+        }
+
+        function formatTglShort(v) {
+            const ts = parseRowTime(v);
+            if (!ts) return v ? escapeHtml(v) : '-';
+            return new Date(ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        // Baris projek yang lolos filter dashboard yang sedang aktif (status + bulan / rentang tanggal)
+        function getDashboardFilteredRows() {
+            const fStatus = document.getElementById('dashFilterStatus').value;
+            const fBulan = document.getElementById('dashFilterBulan').value;
+            const fStart = document.getElementById('dashStartDate').value;
+            const fEnd = document.getElementById('dashEndDate').value;
+
+            return getDB(DB_KEY_SALES).filter(row => {
+                const status = normalizeStatus(row['STATUS']);
+                const bulan = String(row['MONTH'] || '-').toUpperCase().trim();
+                let passBulan = true;
+                if ((fStart && fEnd) || fBulan === 'YTD') {
+                    passBulan = checkDateFilter(row['Tgl Dibuat'], fStart, fEnd, fBulan);
+                } else if (fBulan !== 'ALL') {
+                    passBulan = (bulan === fBulan);
+                }
+                const passStatus = (fStatus === 'ALL' || status === fStatus);
+                return passBulan && passStatus;
+            });
+        }
+
+        let locModalInst;
+
+        function openLocationModal(cleanKey, displayName) {
+            const fStatus = document.getElementById('dashFilterStatus').value;
+            const fBulan = document.getElementById('dashFilterBulan').value;
+            const fStart = document.getElementById('dashStartDate').value;
+            const fEnd = document.getElementById('dashEndDate').value;
+
+            const rows = getDashboardFilteredRows().filter(r => cleanLokasiKey(r['Lokasi']) === cleanKey);
+
+            let potential = 0, dealSum = 0, onProg = 0;
+            const counts = { 'DEAL': 0, 'ON PROGRESS': 0, 'NEW': 0, 'NO DEAL': 0 };
+            rows.forEach(r => {
+                const st = normalizeStatus(r['STATUS']);
+                const amt = parseAmount(r['amount'] || r['Nilai']);
+                potential += amt;
+                if (st === 'DEAL') dealSum += amt;
+                if (st === 'ON PROGRESS') onProg++;
+                if (counts[st] !== undefined) counts[st]++;
+            });
+
+            // Aturan yang sama dengan kartu KPI di dashboard
+            const kpiDeal = fStatus === 'ALL' ? dealSum : potential;
+            const kpiPending = fStatus === 'ALL' ? onProg : rows.length;
+            const dealPct = potential === 0 ? '0' : ((kpiDeal / potential) * 100).toFixed(1);
+
+            document.getElementById('locTitle').innerText = displayName;
+            const statusLabel = fStatus === 'ALL' ? 'Semua status' : fStatus;
+            const periodLabel = (fStart && fEnd) ? `${fStart} s/d ${fEnd}` : (fBulan === 'ALL' ? 'Semua bulan' : (fBulan === 'YTD' ? 'Year to Date' : 'Bulan ' + fBulan));
+            document.getElementById('locSubtitle').innerText = `${rows.length} projek terdaftar · ${statusLabel} · ${periodLabel}`;
+
+            document.getElementById('locTitlePotential').innerText = fStatus === 'ALL' ? 'TOTAL POTENTIAL AMOUNT PROJECT' : `TOTAL POTENTIAL AMOUNT PROJECT (${fStatus})`;
+            document.getElementById('locTitleDeal').innerText = fStatus === 'ALL' ? 'TOTAL PROJECT AMOUNT (DEAL)' : `TOTAL PROJECT AMOUNT (${fStatus})`;
+            document.getElementById('locTitlePending').innerText = fStatus === 'ALL' ? 'PROJEK TERTUNDA (ON PROGRESS)' : `PROJEK (${fStatus})`;
+            document.getElementById('locDealPct').innerText = dealPct;
+
+            // Angka mulai dari 0 lalu menghitung naik setelah popup terbuka
+            const kpiEls = [
+                [document.getElementById('locKpiPotential'), potential, formatRp],
+                [document.getElementById('locKpiDeal'), kpiDeal, formatRp],
+                [document.getElementById('locKpiTotal'), rows.length, String],
+                [document.getElementById('locKpiPending'), kpiPending, String]
+            ];
+            kpiEls.forEach(([el, , fmt]) => { el.dataset.value = 0; el.innerText = fmt(0); });
+            setTimeout(() => kpiEls.forEach(([el, val, fmt]) => animateNumber(el, val, fmt, 900)), 280);
+
+            const chipDefs = [['DEAL', '#22c55e'], ['ON PROGRESS', '#718096'], ['NEW', '#14b8a6'], ['NO DEAL', '#ef4444']];
+            document.getElementById('locStatusChips').innerHTML =
+                '<span class="kpi-title me-2">Rincian Status</span>' +
+                chipDefs.map(([k, c]) => `<span class="status-chip"><span class="dot" style="background:${c}"></span>${k}<span class="ms-1 text-dark">${counts[k]}</span></span>`).join('');
+
+            const latest = rows.slice()
+                .sort((a, b) => (parseRowTime(b['Tgl Dibuat']) - parseRowTime(a['Tgl Dibuat'])) || String(b['No. Projek']).localeCompare(String(a['No. Projek'])))
+                .slice(0, 5);
+
+            let html = '';
+            latest.forEach((r, i) => {
+                const st = normalizeStatus(r['STATUS']);
+                const badge = st === 'DEAL' ? 'bg-success' : st === 'NO DEAL' ? 'bg-danger' : st === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
+                const judul = r['Judul Projek'] || '-';
+                html += `<tr class="loc-row" style="animation-delay:${350 + i * 80}ms">
+                    <td class="text-nowrap">${formatTglShort(r['Tgl Dibuat'])}</td>
+                    <td><strong>${escapeHtml(r['No. Projek'])}</strong></td>
+                    <td class="fw-medium text-truncate" style="max-width:260px;" title="${escapeHtml(judul)}">${escapeHtml(judul)}</td>
+                    <td>${escapeHtml(r['Cust name'] || r['Customer'] || '-')}</td>
+                    <td class="text-end fw-bold text-nowrap">${formatRp(parseAmount(r['amount'] || r['Nilai']))}</td>
+                    <td class="text-center"><span class="badge ${badge}">${escapeHtml(st)}</span></td>
+                </tr>`;
+            });
+            document.querySelector('#tblLocLatest tbody').innerHTML = html || '<tr><td colspan="6" class="text-center py-4 text-muted">Belum ada transaksi.</td></tr>';
+            document.getElementById('locLatestNote').innerText = rows.length
+                ? `Menampilkan ${latest.length} dari ${rows.length} projek terbaru di lokasi ini (diurutkan dari Tgl Dibuat). Angka mengikuti filter dashboard yang sedang aktif.`
+                : '';
+
+            if (!locModalInst) locModalInst = new bootstrap.Modal(document.getElementById('modalLocation'));
+            locModalInst.show();
+        }
+
         function initAndPlotMap(cityCounts, cityRealNames) {
             if(mapInstance !== null) { 
                 mapInstance.remove(); 
@@ -1875,27 +2637,49 @@
             
             mapInstance = L.map('mapLokasi', { scrollWheelZoom: false }).setView([-2.5, 118.0], 4.5);
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap & CartoDB'
+            // Basemap gratis tanpa API key (OpenStreetMap). Jika gagal dimuat, otomatis pindah ke Esri.
+            let tileErrors = 0;
+            let usingFallback = false;
+            const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                referrerPolicy: 'strict-origin-when-cross-origin',
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(mapInstance);
+            osmLayer.on('tileerror', () => {
+                tileErrors++;
+                if (tileErrors >= 3 && !usingFallback) {
+                    usingFallback = true;
+                    mapInstance.removeLayer(osmLayer);
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 18,
+                        attribution: 'Tiles &copy; Esri'
+                    }).addTo(mapInstance);
+                }
+            });
 
+            let pinIndex = 0;
             for (let cleanKota in cityCounts) {
                 let coords = getMapCoordinates(cleanKota);
                 if (coords) {
-                    let count = cityCounts[cleanKota];
-                    let displayNama = cityRealNames[cleanKota];
-                    
-                    let radiusSize = 10; 
-                    
-                    L.circleMarker(coords, {
-                        radius: radiusSize,
+                    const count = cityCounts[cleanKota];
+                    const displayNama = cityRealNames[cleanKota];
+
+                    const marker = L.circleMarker(coords, {
+                        radius: 10,
                         fillColor: "#facc15",
                         color: "#0f172a",
                         weight: 2,
                         opacity: 1,
-                        fillOpacity: 0.95
-                    }).bindPopup(`<div style="text-align:center;"><b>${displayNama}</b><br><span style="font-size:1.1rem;font-weight:bold;">${count}</span> Projek Terdaftar</div>`)
-                      .addTo(mapInstance);
+                        fillOpacity: 0.95,
+                        className: 'map-pin'
+                    }).addTo(mapInstance);
+
+                    marker.bindTooltip(`<b>${escapeHtml(displayNama)}</b><br>${count} projek &middot; klik untuk detail`, { direction: 'top', offset: [0, -8] });
+                    marker.on('click', () => openLocationModal(cleanKota, displayNama));
+
+                    const pinEl = marker.getElement();
+                    if (pinEl) pinEl.style.animationDelay = (pinIndex * 45) + 'ms';
+                    pinIndex++;
                 }
             }
             
@@ -1904,8 +2688,76 @@
             }, 500);
         }
 
+        // --- INDEKS DATA PROJEK (dihitung sekali, dipakai tabel, aging, dll) ---
+        let salesIndex = [];
+        let salesIndexSrc = null;
+        let salesIndexLen = -1;
+        let salesIndexDay = '';
+        let salesMetaMap = new Map();
+
+        function hasDocNo(v) {
+            const s = String(v === undefined || v === null ? '' : v).trim();
+            return s !== '' && s !== '-';
+        }
+
+        function parseDateLoose(v) {
+            if (!v) return null;
+            const s = String(v).trim();
+            let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+            let d = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(s);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+        function getSalesIndex() {
+            const src = getDB(DB_KEY_SALES);
+            const now = new Date();
+            const dayKey = now.getFullYear() + '-' + now.getMonth() + '-' + now.getDate();
+            if (src === salesIndexSrc && src.length === salesIndexLen && dayKey === salesIndexDay) return salesIndex;
+
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            salesIndex = src.map(row => {
+                const client = String(row['Cust name'] || row['Customer'] || '');
+                const title = String(row['Judul Projek'] || '');
+                const no = String(row['No. Projek'] || '');
+                let status = String(row['STATUS'] || '').toUpperCase().trim();
+                if (status === 'PENDING') status = 'ON PROGRESS';
+                const cat = getRowCategory(row);
+                const d = parseDateLoose(row['Tgl Dibuat']);
+                const dateStr = d ? (d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate())) : String(row['Tgl Dibuat'] || '');
+
+                // AGING: sudah ada quotation, tetapi belum ada PO/SPK maupun Invoice
+                let agingDays = null, agingStart = '';
+                const outstanding = hasDocNo(row['No. Quotation']) && !hasDocNo(row['No. PO/SPK']) &&
+                                    !hasDocNo(row['No. Invoice']) && status !== 'NO DEAL';
+                if (outstanding) {
+                    const sd = parseDateLoose(row['Tgl Approval']) || d;   // tanggal mulai: Tgl Approval, jika kosong pakai Tgl Dibuat
+                    if (sd) {
+                        agingDays = Math.max(0, Math.floor((today - new Date(sd.getFullYear(), sd.getMonth(), sd.getDate()).getTime()) / 86400000));
+                        agingStart = sd.getFullYear() + '-' + pad2(sd.getMonth() + 1) + '-' + pad2(sd.getDate());
+                    }
+                }
+
+                return {
+                    row, no, client, title, status, cat, dateStr, agingDays, agingStart,
+                    ts: d ? d.getTime() : 0,
+                    amt: parseAmount(row['amount']),
+                    lokasi: String(row['Lokasi'] || ''),
+                    jenis: String(row['Jenis'] || ''),
+                    search: (no + ' ' + client + ' ' + title).toLowerCase()
+                };
+            });
+            salesIndexSrc = src; salesIndexLen = src.length; salesIndexDay = dayKey;
+            salesMetaMap = new Map(salesIndex.map(m => [m.row, m]));
+            return salesIndex;
+        }
+
         // --- MANAJEMEN DATABASE PROJEK ---
         let currentSort = { col: 'Tgl Dibuat', asc: false };
+        let salesPage = 1;
+        const SALES_PAGE_SIZE = 50;
+        let salesSearchTimer = null;
 
         function setSortSales(columnName) {
             if(currentSort.col === columnName) { 
@@ -1914,57 +2766,245 @@
                 currentSort.col = columnName; 
                 currentSort.asc = true; 
             }
+            salesPage = 1;
             renderSalesTable(); 
         }
 
+        function onSalesSearch() {
+            clearTimeout(salesSearchTimer);
+            salesSearchTimer = setTimeout(() => { salesPage = 1; renderSalesTable(); }, 250);
+        }
+
+        function goSalesPage(p) {
+            salesPage = p;
+            renderSalesTable();
+            const tbl = document.getElementById('tblSales');
+            if (tbl) tbl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         function renderSalesTable() {
-            let data = [...getDB(DB_KEY_SALES)]; 
-            const searchVal = (document.getElementById('searchSales')?.value || '').toLowerCase();
+            const searchVal = (document.getElementById('searchSales')?.value || '').toLowerCase().trim();
             const tbody = document.querySelector('#tblSales tbody');
-            
-            data.sort((a, b) => {
-                let valA = a[currentSort.col] || ''; 
-                let valB = b[currentSort.col] || '';
-                
-                if(currentSort.col === 'amount') { 
-                    valA = parseAmount(valA); 
-                    valB = parseAmount(valB); 
-                } else if(currentSort.col === 'No. Projek' || currentSort.col === 'Tgl Dibuat') { 
-                    valA = String(valA).toLowerCase(); 
-                    valB = String(valB).toLowerCase(); 
-                }
-                
-                if(valA < valB) return currentSort.asc ? -1 : 1;
-                if(valA > valB) return currentSort.asc ? 1 : -1;
-                return 0;
+            const pager = document.getElementById('salesPager');
+
+            let list = getSalesIndex();
+            if (searchVal) list = list.filter(m => m.search.includes(searchVal));
+            else list = list.slice();
+
+            const col = currentSort.col;
+            const dir = currentSort.asc ? 1 : -1;
+            const keyOf = {
+                'amount': m => m.amt,
+                'Tgl Dibuat': m => m.ts,
+                'No. Projek': m => m.no.toLowerCase(),
+                'Judul Projek': m => m.title.toLowerCase(),
+                'Cust name': m => m.client.toLowerCase(),
+                'Lokasi': m => m.lokasi.toLowerCase(),
+                'STATUS': m => m.status
+            }[col] || (m => String(m.row[col] || '').toLowerCase());
+            list.sort((a, b) => {
+                const A = keyOf(a), B = keyOf(b);
+                return A < B ? -dir : A > B ? dir : 0;
             });
 
+            const total = list.length;
+            const totalPages = Math.max(1, Math.ceil(total / SALES_PAGE_SIZE));
+            if (salesPage > totalPages) salesPage = totalPages;
+            if (salesPage < 1) salesPage = 1;
+            const startIdx = (salesPage - 1) * SALES_PAGE_SIZE;
+            const pageItems = list.slice(startIdx, startIdx + SALES_PAGE_SIZE);
+
             let html = '';
-            data.forEach(row => {
-                let no = row['No. Projek']; 
-                let client = row['Cust name'] || row['Customer']; 
-                let title = row['Judul Projek'];
-                let amt = parseAmount(row['amount']); 
-                
-                let status = String(row['STATUS'] || '').toUpperCase().trim();
-                if(status === 'PENDING') {
-                    status = 'ON PROGRESS';
-                }
-                
-                let statClass = status === 'DEAL' ? 'bg-success' : status === 'NO DEAL' ? 'bg-danger' : status === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
-                
-                if (String(no).toLowerCase().includes(searchVal) || String(client).toLowerCase().includes(searchVal) || String(title).toLowerCase().includes(searchVal)) {
-                    html += `<tr>
-                        <td><strong>${no}</strong><br><small class="text-muted">${row['Tgl Dibuat']||'-'}</small></td>
-                        <td><div class="fw-bold text-dark text-truncate" style="max-width:250px;" title="${title}">${title}</div><span class="badge border text-dark mt-1">${row['Jenis']}</span></td>
-                        <td class="fw-medium">${client}</td>
-                        <td>${row['Lokasi'] || '-'}</td>
-                        <td class="fw-bold text-primary">${formatRp(amt)}</td>
-                        <td><span class="badge ${statClass} px-3 py-2">${status}</span></td>
-                    </tr>`;
-                }
+            pageItems.forEach(m => {
+                const statClass = m.status === 'DEAL' ? 'bg-success' : m.status === 'NO DEAL' ? 'bg-danger' : m.status === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
+                const agingTxt = (m.agingDays !== null) ? `<div class="small text-muted mt-1"><i class="fas fa-hourglass-half me-1"></i>${m.agingDays} hari</div>` : '';
+                html += `<tr>
+                    <td><strong>${escapeHtml(m.no)}</strong><br><small class="text-muted">${escapeHtml(m.dateStr || '-')}</small></td>
+                    <td><div class="fw-bold text-dark text-truncate" style="max-width:250px;" title="${escapeHtml(m.title)}">${escapeHtml(m.title)}</div><span class="badge border text-dark mt-1">${escapeHtml(m.jenis)}</span></td>
+                    <td class="fw-medium">${escapeHtml(m.client)}<br><span class="badge border text-secondary mt-1">${escapeHtml(m.cat)}</span></td>
+                    <td>${escapeHtml(m.lokasi) || '-'}</td>
+                    <td class="fw-bold text-primary">${formatRp(m.amt)}</td>
+                    <td><span class="badge ${statClass} px-3 py-2">${escapeHtml(m.status)}</span>${agingTxt}</td>
+                </tr>`;
             });
             tbody.innerHTML = html || `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada data projek ditemukan.</td></tr>`;
+
+            if (pager) {
+                if (total === 0) { pager.innerHTML = ''; return; }
+                const from = startIdx + 1, to = Math.min(startIdx + SALES_PAGE_SIZE, total);
+                const btn = (label, p, disabled, active) =>
+                    `<button type="button" class="btn btn-sm ${active ? 'btn-dark' : 'btn-outline-secondary'} fw-bold" ${disabled ? 'disabled' : ''} onclick="goSalesPage(${p})">${label}</button>`;
+                let pages = [];
+                const lo = Math.max(1, salesPage - 2), hi = Math.min(totalPages, salesPage + 2);
+                if (lo > 1) pages.push(btn(1, 1, false, false), lo > 2 ? '<span class="px-1 text-muted">…</span>' : '');
+                for (let p = lo; p <= hi; p++) pages.push(btn(p, p, false, p === salesPage));
+                if (hi < totalPages) pages.push(hi < totalPages - 1 ? '<span class="px-1 text-muted">…</span>' : '', btn(totalPages, totalPages, false, false));
+                pager.innerHTML = `<div class="small text-muted">Menampilkan ${from}–${to} dari ${total} projek</div>
+                    <div class="d-flex align-items-center gap-1 flex-wrap">${btn('<i class="fas fa-chevron-left"></i>', salesPage - 1, salesPage === 1, false)}${pages.join('')}${btn('<i class="fas fa-chevron-right"></i>', salesPage + 1, salesPage === totalPages, false)}</div>`;
+            }
+        }
+
+        // --- POPUP SCORE CARD (daftar projek di balik angka KPI) ---
+        let kpiData = { potential: [], revenue: [], total: [], pending: [] };
+        let kpiModalState = { key: '', items: [], shown: 0 };
+        let kpiSearchTimer = null;
+        const KPI_PAGE = 100;
+
+        function openKpiModal(key) {
+            const list = (kpiData[key] || []).slice().sort((a, b) => b.amt - a.amt);
+            const titles = {
+                potential: () => document.getElementById('kpiTitleTotalAmount').innerText,
+                revenue: () => document.getElementById('kpiTitleRev').innerText,
+                total: () => 'TOTAL PROJEK',
+                pending: () => document.getElementById('kpiTitlePending').innerText
+            };
+            kpiModalState = { key, all: list, items: list, shown: 0 };
+            document.getElementById('kpiModalTitle').innerText = titles[key]();
+            document.getElementById('kpiModalSearch').value = '';
+            renderKpiRows(true);
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalKpi')).show();
+        }
+
+        function onKpiSearch() {
+            clearTimeout(kpiSearchTimer);
+            kpiSearchTimer = setTimeout(() => {
+                const q = document.getElementById('kpiModalSearch').value.toLowerCase().trim();
+                kpiModalState.items = q ? kpiModalState.all.filter(m => m.search.includes(q)) : kpiModalState.all;
+                renderKpiRows(true);
+            }, 250);
+        }
+
+        function showMoreKpi() { renderKpiRows(false); }
+
+        function renderKpiRows(reset) {
+            const st = kpiModalState;
+            if (reset) { st.shown = 0; document.querySelector('#tblKpiList tbody').innerHTML = ''; }
+            const slice = st.items.slice(st.shown, st.shown + KPI_PAGE);
+            const html = slice.map(m => {
+                const statClass = m.status === 'DEAL' ? 'bg-success' : m.status === 'NO DEAL' ? 'bg-danger' : m.status === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
+                return `<tr>
+                    <td class="text-muted small">${escapeHtml(m.dateStr || '-')}</td>
+                    <td><strong>${escapeHtml(m.no)}</strong></td>
+                    <td><div class="text-truncate" style="max-width:280px;" title="${escapeHtml(m.title)}">${escapeHtml(m.title)}</div><span class="badge border text-dark mt-1">${escapeHtml(m.jenis)}</span></td>
+                    <td>${escapeHtml(m.client)}</td>
+                    <td class="text-center"><span class="badge ${statClass} px-3 py-2">${escapeHtml(m.status)}</span></td>
+                    <td class="text-end fw-bold text-primary">${formatRp(m.amt)}</td>
+                </tr>`;
+            }).join('');
+            const tbody = document.querySelector('#tblKpiList tbody');
+            tbody.insertAdjacentHTML('beforeend', html);
+            st.shown += slice.length;
+
+            const total = st.items.reduce((sum, m) => sum + m.amt, 0);
+            document.getElementById('kpiModalSub').innerText = `${st.items.length} projek · total ${formatRp(total)}`;
+            if (st.items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="fas fa-folder-open fs-2 mb-2"></i><br>Tidak ada projek.</td></tr>`;
+            }
+            document.getElementById('kpiModalNote').innerText = st.items.length ? `Menampilkan ${st.shown} dari ${st.items.length} projek (diurutkan dari amount terbesar)` : '';
+            document.getElementById('kpiModalMore').classList.toggle('d-none', st.shown >= st.items.length);
+        }
+
+        // --- AGING PROJEK (Quotation belum PO / Invoice) ---
+        const AGING_GROUPS = [
+            { key: 'karung',  label: 'CURRENT',  desc: 'Di bawah 30 hari', min: 0,  max: 30,       color: '#198754', icon: 'fa-bag-shopping', chip: 'bg-success', chipText: 'CURRENT',
+              rec: 'Pertahankan: kirim reminder berkala & pantau respons customer.',
+              recLong: 'Kondisi ideal. Projek masih baru (di bawah 30 hari). Pertahankan ritme: kirim reminder berkala, pastikan PIC customer sudah menerima quotation, dan catat jadwal follow-up berikutnya.' },
+            { key: 'net',     label: 'PERLU FOLLOW-UP',     desc: '30 – 59 hari',     min: 30, max: 60,       color: '#0dcaf0', icon: 'fa-fish', chip: 'bg-info text-dark', chipText: 'PERLU FOLLOW-UP',
+              rec: 'Follow-up ke PIC minggu ini; konfirmasi status PO.',
+              recLong: 'Masih sangat bisa dikejar. Hubungi PIC customer minggu ini, konfirmasi apakah PO/SPK sedang diproses, dan tanyakan jika ada kendala (anggaran, jadwal, atau revisi quotation).' },
+            { key: 'mancing', label: 'PERLU ESKALASI', desc: '60 – 89 hari',     min: 60, max: 90,       color: '#ffc107', icon: 'fa-water', chip: 'bg-warning text-dark', chipText: 'PERLU ESKALASI',
+              rec: 'Eskalasi ke atasan; tawarkan revisi harga atau jadwal.',
+              recLong: 'Mulai berisiko. Libatkan atasan/manajemen untuk eskalasi ke level yang lebih tinggi di customer, tawarkan revisi harga, paket, atau jadwal pelaksanaan, dan tetapkan batas waktu keputusan (mis. 2 minggu).' },
+            { key: 'others',  label: 'KRITIS · REVIEW',  desc: '90 hari ke atas',  min: 90, max: Infinity, color: '#dc3545', icon: 'fa-triangle-exclamation', chip: 'bg-danger', chipText: 'KRITIS · REVIEW',
+              rec: 'Review satu per satu: perbarui quotation atau tutup NO DEAL.',
+              recLong: 'Sudah sangat lama tanpa PO/Invoice. Review satu per satu: jika customer masih berminat, terbitkan quotation baru; jika tidak ada respons, tandai sebagai NO DEAL agar pipeline dan Potential Amount tidak menggembung.' }
+        ];
+        const AGING_IDEAL_PCT = 70; // kondisi ideal: minimal 70% projek menunggu masih di kelompok CURRENT
+
+        function getAgingGroupItems(key) {
+            const g = AGING_GROUPS.find(x => x.key === key);
+            return getSalesIndex().filter(m => m.agingDays !== null && m.agingDays >= g.min && m.agingDays < g.max);
+        }
+
+        function renderAging() {
+            const box = document.getElementById('agingTiles');
+            if (!box) return;
+            const all = getSalesIndex().filter(m => m.agingDays !== null);
+            const totalAll = all.length;
+            const totalAmt = all.reduce((sum, m) => sum + m.amt, 0);
+            const sub = document.getElementById('agingSummary');
+            if (sub) sub.innerText = `${totalAll} projek menunggu PO / Invoice · ${formatRp(totalAmt)}`;
+
+            const stats = AGING_GROUPS.map(g => {
+                const items = all.filter(m => m.agingDays >= g.min && m.agingDays < g.max);
+                return { g, count: items.length, amt: items.reduce((sum, m) => sum + m.amt, 0), pct: totalAll ? items.length / totalAll * 100 : 0 };
+            });
+
+            box.innerHTML = stats.map(({ g, count, amt, pct }) => `<div class="col-6 col-lg-3">
+                    <div class="loc-kpi aging-tile h-100" style="border-bottom-color:${g.color}; cursor:pointer;" onclick="openAgingModal('${g.key}')" title="Klik untuk melihat daftar projek">
+                        <div class="kpi-title"><i class="fas ${g.icon} me-1" style="color:${g.color}"></i>${g.label}</div>
+                        <div class="kpi-value aging-amount" title="${formatRp(amt)}" style="font-size:1.45rem;">${formatShortRp(amt) === '-' ? 'Rp 0' : 'Rp ' + formatShortRp(amt)}</div>
+                        <div class="small fw-bold text-dark">${count} projek</div>
+                        <div class="small text-muted">${g.desc} · ${Math.round(pct)}%</div>
+                    </div>
+                </div>`).join('');
+
+            // Bar distribusi
+            const bar = document.getElementById('agingBar');
+            if (bar) {
+                bar.innerHTML = totalAll ? stats.map(({ g, count, pct }) =>
+                    count ? `<div title="${g.label}: ${count} projek (${Math.round(pct)}%)" style="width:${pct}%; background:${g.color};"></div>` : '').join('') : '';
+            }
+
+            // Rekomendasi dinamis
+            const reco = document.getElementById('agingReco');
+            if (reco) {
+                if (!totalAll) {
+                    reco.innerHTML = '<i class="fas fa-circle-check text-success me-1"></i> Tidak ada projek yang menunggu PO / Invoice. Kondisi ideal.';
+                } else {
+                    const [k, n, m, o] = stats;
+                    const healthy = k.pct >= AGING_IDEAL_PCT;
+                    const lines = [];
+                    lines.push(healthy
+                        ? `<i class="fas fa-circle-check text-success me-1"></i> <strong>Sehat:</strong> ${Math.round(k.pct)}% projek masih Current (target ideal ≥ ${AGING_IDEAL_PCT}%).`
+                        : `<i class="fas fa-bullseye text-primary me-1"></i> <strong>Target ideal:</strong> minimal ${AGING_IDEAL_PCT}% projek berstatus Current. Saat ini baru <strong>${Math.round(k.pct)}%</strong> (${k.count} dari ${totalAll} projek).`);
+                    if (n.count + m.count > 0) {
+                        lines.push(`<i class="fas fa-phone-volume text-warning me-1"></i> <strong>Prioritas minggu ini:</strong> follow-up ${n.count + m.count} projek yang Perlu Follow-up &amp; Eskalasi (Rp ${formatShortRp(n.amt + m.amt)}). Masih paling mungkin ditutup.`);
+                    }
+                    if (o.count > 0) {
+                        lines.push(`<i class="fas fa-triangle-exclamation text-danger me-1"></i> <strong>Perlu dibersihkan:</strong> ${o.count} projek (${Math.round(o.pct)}%, Rp ${formatShortRp(o.amt)}) sudah lebih dari 90 hari. Review dan tutup sebagai NO DEAL atau terbitkan quotation baru agar Potential Amount lebih akurat.`);
+                    }
+                    reco.innerHTML = lines.map(l => `<div class="mb-1">${l}</div>`).join('');
+                }
+            }
+            softRefresh(box);
+        }
+
+        function openAgingModal(key) {
+            const g = AGING_GROUPS.find(x => x.key === key);
+            const items = getAgingGroupItems(key).sort((a, b) => b.agingDays - a.agingDays);
+            const amt = items.reduce((s, m) => s + m.amt, 0);
+            document.getElementById('agingModalTitle').innerText = `Aging ${g.label} (${g.desc})`;
+            document.getElementById('agingModalSub').innerText = `${items.length} projek · total ${formatRp(amt)}`;
+
+            const recBox = document.getElementById('agingModalReco');
+            recBox.style.borderLeft = `5px solid ${g.color}`;
+            recBox.innerHTML = `<span class="badge ${g.chip} me-2">${g.chipText}</span><strong>Rekomendasi:</strong> ${g.recLong}`;
+
+            const MAX = 500;
+            const rows = items.slice(0, MAX).map(m => `<tr>
+                <td><strong>${escapeHtml(m.no)}</strong></td>
+                <td><div class="text-truncate" style="max-width:260px;" title="${escapeHtml(m.title)}">${escapeHtml(m.title)}</div><span class="badge border text-dark mt-1">${escapeHtml(m.jenis)}</span></td>
+                <td>${escapeHtml(m.client)}</td>
+                <td>${escapeHtml(m.row['No. Quotation'] || '-')}</td>
+                <td>${escapeHtml(m.agingStart || '-')}</td>
+                <td class="text-center"><span class="badge px-3 py-2" style="background:${g.color}; color:${key === 'mancing' || key === 'net' ? '#212529' : '#fff'}">${m.agingDays} hari</span></td>
+                <td class="text-end fw-bold text-primary">${formatRp(m.amt)}</td>
+            </tr>`).join('');
+            document.querySelector('#tblAgingList tbody').innerHTML = rows ||
+                `<tr><td colspan="7" class="text-center py-5 text-muted"><i class="fas fa-circle-check fs-2 mb-2"></i><br>Tidak ada projek di kelompok ini.</td></tr>`;
+            document.getElementById('agingModalNote').innerText = items.length > MAX ? `Menampilkan ${MAX} projek tertua dari ${items.length}.` : '';
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAging')).show();
         }
 
         // --- MANAJEMEN EXCEL IMPORT (WIPE & REPLACE DINAMIS) ---
@@ -1976,7 +3016,7 @@
         function downloadTemplate() { 
             const wb = XLSX.utils.book_new(); 
             const templateHeaders = [
-                'Tgl Dibuat', 'Jenis', 'No. Projek', 'Judul Projek', 'Customer', 
+                'Tgl Dibuat', 'Jenis', 'No. Projek', 'Judul Projek', 'Customer', 'Category', 
                 'PIC Customer', 'Nilai', 'Status', 'Tgl Approval', 'Keterangan', 
                 'No. Proposal', 'No. Quotation', 'No. PO/SPK', 'No. Invoice', 'No. BAST/P', 
                 'No. LPJ', 'Dibuat/Diteruskan Oleh', 'Lokasi', 'amount', 'MONTH', 
@@ -2049,7 +3089,17 @@
                            calculatedStatus = 'NO DEAL';
                        }
 
-                       let rowData = { ...row };
+                       // Susun kolom: 'Category' otomatis dibuat tepat di samping Customer
+                       let valCategory = getCustomerCategory(valCustomer);
+                       let rowData = {};
+                       let catPlaced = false;
+                       const anchorKey = ('Customer' in row) ? 'Customer' : 'Cust name';
+                       Object.keys(row).forEach(k => {
+                           if (k === 'Category') return;
+                           rowData[k] = row[k];
+                           if (k === anchorKey) { rowData['Category'] = valCategory; catPlaced = true; }
+                       });
+                       if (!catPlaced) rowData['Category'] = valCategory;
                        
                        rowData['Tgl Dibuat'] = parsedDate;
                        rowData['amount'] = valNilai;
@@ -2068,23 +3118,52 @@
                    } 
                }); 
                
-               await saveSalesDBWipeAndReplace(dataDB); 
+               let saveResult;
+               try {
+                   saveResult = await saveSalesDBWipeAndReplace(dataDB);
+               } catch (err) {
+                   console.error(err);
+                   Swal.close();
+                   Swal.fire('Import Gagal', 'Data lama TIDAK diubah. Detail: ' + (err.message || err), 'error');
+                   e.target.value = '';
+                   return;
+               }
+               added = saveResult.count;
                
                addLog('Import Data (Wipe & Replace)', `Menyelaraskan ${added} data (Timpa Semua).`, 'Seluruh database lama diganti penuh dengan data Excel terbaru dengan pembaruan status otomatis.');
                
                renderSalesTable(); 
                Swal.close();
-               Swal.fire('Penyelarasan Selesai', `Sebanyak ${added} data projek berhasil dipulihkan secara penuh tanpa masalah.`, 'success'); 
+               Swal.fire('Penyelarasan Selesai', `Sebanyak ${added} data projek berhasil disimpan.${saveResult.dupes ? ' (' + saveResult.dupes + ' No. Projek ganda digabung, data terakhir yang dipakai.)' : ''}`, 'success'); 
                e.target.value = ''; 
             }; 
             r.readAsBinaryString(file);
         }
 
         // --- LAPORAN & EKSPOR PDF/EXCEL ---
-        function generateReport() {
+        function populateReportYears() {
+            const sel = document.getElementById('reportFilterTahun');
+            if (!sel) return;
+            const keep = sel.value || 'ALL';
+            const years = new Set();
+            getSalesIndex().forEach(m => { if (m.ts > 0) years.add(new Date(m.ts).getFullYear()); });
+            const list = Array.from(years).sort((a, b) => b - a);
+            sel.innerHTML = '<option value="ALL">Semua Tahun (ALL)</option>' + list.map(y => `<option value="${y}">${y}</option>`).join('');
+            sel.value = (keep === 'ALL' || years.has(Number(keep))) ? keep : 'ALL';
+        }
+
+        function reportFileSuffix() {
+            const th = document.getElementById('reportFilterTahun').value;
+            const bl = document.getElementById('reportFilterBulan').value;
+            return (th !== 'ALL' ? '_' + th : '') + (bl !== 'ALL' ? '_' + bl : '');
+        }
+
+        function generateReport(silent) {
             const statFilter = document.getElementById('reportFilterStatus').value; 
             const blnFilter = document.getElementById('reportFilterBulan').value; 
+            const thnFilter = document.getElementById('reportFilterTahun').value; 
             const data = getDB(DB_KEY_SALES);
+            getSalesIndex();
             
             let filtered = data.filter(s => {
                 let statusNormalize = String(s.STATUS || '').toUpperCase().trim();
@@ -2094,8 +3173,10 @@
                 
                 let matchStat = statFilter === 'ALL' || statusNormalize === statFilter;
                 let matchBln = blnFilter === 'ALL' || String(s.MONTH).toUpperCase() === blnFilter;
+                let meta = salesMetaMap.get(s);
+                let matchThn = thnFilter === 'ALL' || (meta && meta.ts > 0 && String(new Date(meta.ts).getFullYear()) === thnFilter);
                 
-                return matchStat && matchBln;
+                return matchStat && matchBln && matchThn;
             });
             
             let html = '';
@@ -2105,36 +3186,42 @@
                 if(stat === 'PENDING') {
                     stat = 'ON PROGRESS';
                 }
+                let meta = salesMetaMap.get(e);
+                let tgl = (meta && meta.dateStr) ? meta.dateStr : (e['Tgl Dibuat'] || '-');
                 
                 let badgeClass = stat === 'DEAL' ? 'bg-success' : stat === 'NO DEAL' ? 'bg-danger' : stat === 'NEW' ? 'bg-info text-dark' : 'bg-warning text-dark';
                 
                 html += `<tr>
-                    <td>${e['Tgl Dibuat']||'-'}</td>
+                    <td>${tgl}</td>
                     <td><strong>${e['No. Projek']}</strong></td>
                     <td class="fw-medium text-truncate" style="max-width:200px;" title="${e['Judul Projek']}">${e['Judul Projek']}</td>
                     <td>${e.Jenis}</td>
                     <td>${e['Cust name']}</td>
+                    <td>${getRowCategory(e)}</td>
                     <td>${e.MONTH}</td>
                     <td class="text-end fw-bold">${formatRp(amt)}</td>
                     <td class="text-center"><span class="badge ${badgeClass}">${stat}</span></td>
                 </tr>`;
             });
             
-            document.querySelector('#tblReport tbody').innerHTML = html || '<tr><td colspan="8" class="text-center py-4">Data tidak ditemukan</td></tr>';
-            addLog('Filter Laporan', `User menarik laporan (Status: ${statFilter}, Bulan: ${blnFilter})`);
+            document.querySelector('#tblReport tbody').innerHTML = html || '<tr><td colspan="9" class="text-center py-4">Data tidak ditemukan</td></tr>';
+            if (!silent) addLog('Filter Laporan', `User menarik laporan (Status: ${statFilter}, Bulan: ${blnFilter}, Tahun: ${thnFilter})`);
         }
         
         function exportReportExcel() { 
-            XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('tblReport'), {sheet:"Report"}), "Laporan_Revenue_UT.xlsx"); 
+            generateReport(true); // pastikan isi tabel sesuai filter yang sedang dipilih
+            XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('tblReport'), {sheet:"Report"}), "Laporan_Revenue_UT" + reportFileSuffix() + ".xlsx"); 
             addLog('Export Laporan', 'Mencetak Laporan Revenue ke Excel'); 
         }
         
         function exportReportPDF() {
+            generateReport(true);
             const doc = new window.jspdf.jsPDF('landscape'); 
             doc.setFontSize(16); 
             doc.text("Laporan Sales Canvasing UT", 14, 22); 
             doc.setFontSize(10); 
-            doc.text("Diekstrak oleh: " + (currentUser ? currentUser.username : 'System') + " | Pada: " + new Date().toLocaleDateString(), 14, 28);
+            const th = document.getElementById('reportFilterTahun').value;
+            doc.text("Diekstrak oleh: " + (currentUser ? currentUser.username : 'System') + " | Pada: " + new Date().toLocaleDateString() + " | Tahun: " + (th === 'ALL' ? 'Semua' : th), 14, 28);
             
             doc.autoTable({ 
                 html: '#tblReport', 
@@ -2142,7 +3229,7 @@
                 theme: 'grid', 
                 headStyles: { fillColor: [26, 26, 26], textColor: [255, 192, 0] } 
             }); 
-            doc.save('Laporan_Revenue_UT.pdf'); 
+            doc.save('Laporan_Revenue_UT' + reportFileSuffix() + '.pdf'); 
             addLog('Export Laporan', 'Mencetak Laporan Revenue ke PDF');
         }
 
@@ -2223,33 +3310,47 @@
             userModalInst.show(); 
         }
         
-        function saveUser() {
-            let users = getDB(DB_KEY_USR); 
-            let u = document.getElementById('usrName').value.trim(); 
-            let p = document.getElementById('usrPass').value; 
+        async function saveUser() {
+            let u = document.getElementById('usrName').value.trim();
+            let p = document.getElementById('usrPass').value;
             let r = document.getElementById('usrRole').value;
-            
-            if(users.find(x => x.username === u)) {
-                return Swal.fire('Error', 'Username sudah terpakai', 'error');
+
+            if (!u || !p) {
+                return Swal.fire('Error', 'Username dan password wajib diisi', 'error');
             }
-            
-            users.push({username: u, password: p, role: r, active: true}); 
-            saveDB(DB_KEY_USR, users); 
-            userModalInst.hide(); 
-            renderUsers(); 
+
+            const { error } = await sb.rpc('admin_create_user', { p_username: u, p_password: p, p_role: r });
+            if (error) {
+                return Swal.fire('Error', error.message, 'error');
+            }
+
+            try { await reloadUsers(); } catch (e) { console.error(e); }
+            userModalInst.hide();
+            renderUsers();
             Swal.fire('Sukses', 'Akun berhasil dibuat', 'success');
-            addLog('Buat Akun', `Admin membuat akun baru: ${u}`);
+            addLog('Buat Akun', `Admin membuat akun baru: ${u.toLowerCase()}`);
         }
-        
-        function toggleUser(idx) {
-            let users = getDB(DB_KEY_USR); 
-            if(users[idx].username === 'admin') {
+
+        async function toggleUser(idx) {
+            let users = getDB(DB_KEY_USR);
+            let target = users[idx];
+            if (!target) return;
+            if (target.username === 'admin') {
                 return Swal.fire('Ditolak', 'Akun Master Admin tidak dapat dimatikan.', 'error');
             }
-            users[idx].active = !users[idx].active; 
-            saveDB(DB_KEY_USR, users); 
+            if (currentUser && target.id === currentUser.id) {
+                return Swal.fire('Ditolak', 'Anda tidak dapat menonaktifkan akun Anda sendiri.', 'error');
+            }
+
+            const newState = !target.active;
+            const { error } = await sb.from('profiles').update({ active: newState }).eq('id', target.id);
+            if (error) {
+                return Swal.fire('Error', error.message, 'error');
+            }
+
+            target.active = newState;
             renderUsers();
-            addLog('Update Akun', `Status akun ${users[idx].username} diubah menjadi ${users[idx].active}`);
+            addLog('Update Akun', `Status akun ${target.username} diubah menjadi ${target.active}`);
         }
 
         // Jalankan fetch awal secara langsung 
